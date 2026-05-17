@@ -1,461 +1,467 @@
-# Check, Please! Server Architecture
+# suppr Server Architecture
 
-## Vision
+## Overview
 
-A self-hosted restaurant recommendation and management platform running on `desktop.local`, serving two users (you and your wife) across laptops and phones. The system maintains itself by crawling the web for fresh restaurant intelligence, and actively helps you decide where to eat.
-
-## System Overview
+suppr runs as a Go API server on Digital Ocean, serving two clients: a Wails desktop app (macOS) and a PWA (iPhones). The server is the single source of truth — it owns the SQLite database, handles all CRUD operations, stores photos, and runs the recommendation engine.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    desktop.local (Mac)                       │
-│                                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐  │
-│  │ Web App  │  │ API      │  │ Cron     │  │ Email      │  │
-│  │ (PWA)    │  │ Server   │  │ Workers  │  │ Sender     │  │
-│  │ :8080    │  │ :8080    │  │ (launchd)│  │ (weekly)   │  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └─────┬──────┘  │
-│       │              │             │              │         │
-│       └──────────────┴──────┬──────┴──────────────┘         │
-│                             │                               │
-│                    ┌────────┴────────┐                       │
-│                    │   SQLite DB     │                       │
-│                    │ checkplease.db  │                       │
-│                    └─────────────────┘                       │
-└─────────────────────────────────────────────────────────────┘
-         │
-         │  HTTPS (Tailscale or local network)
-         │
-    ┌────┴────┐
-    │ Clients │
-    ├─────────┤
-    │ Laptop  │  → Full web UI (browser)
-    │ Laptop  │  → Full web UI (browser)
-    │ Phone   │  → PWA (installed to home screen)
-    │ Phone   │  → PWA (installed to home screen)
-    └─────────┘
+┌──────────────┐     ┌──────────────┐     ┌─────────────────────┐
+│  Wails App   │     │  PWA (phone) │     │  DO API Server      │
+│  laptop.local│────▶│  Safari      │────▶│  Go + chi + SQLite  │
+│  laptop2     │     │  2 iPhones   │     │  suppr.trueblocks.io│
+└──────────────┘     └──────────────┘     └─────────────────────┘
 ```
 
 ## Technology Choices
 
 | Component | Choice | Why |
 |-----------|--------|-----|
-| **Backend** | Python + FastAPI | Already using Python; FastAPI is fast, async, auto-generates API docs |
-| **Database** | SQLite | 2 users, read-heavy, zero admin, already built, perfectly adequate |
-| **Frontend** | Vanilla JS + PWA | No build step, instant load, installable on phones |
-| **Styling** | Embedded CSS (current approach) | No dependencies, dark theme already built |
-| **Mobile** | PWA (Progressive Web App) | No app store, works offline, push notifications, camera for photos |
-| **Email** | Python + SMTP | Use Gmail SMTP or local postfix; simple for weekly digests |
-| **Scheduler** | macOS launchd | Native, reliable, survives reboots |
-| **Networking** | Tailscale (recommended) | Secure access from anywhere, no port forwarding, free for personal use |
-| **Process manager** | launchd or supervisord | Keep the server running after reboots |
+| **Language** | Go | Consistent with all other trueblocks-art apps. Single binary deployment. |
+| **Router** | chi | Lightweight, idiomatic, middleware-friendly. |
+| **Database** | SQLite (modernc.org/sqlite) | Pure Go, no CGO. 2 users, ~1000 rows. WAL mode for concurrent reads. |
+| **Auth** | API key per user | Two known users, no registration flow. `X-API-Key` header on every request. |
+| **Frontend** | React 18 + Mantine 8 + TypeScript 5 | Same stack as all other apps in the platform. |
+| **Mobile** | PWA | No App Store. Camera via HTML input. Installable to home screen. |
+| **Reverse proxy** | Caddy | Auto-TLS, simple config. Already running on DO for other sites. |
+| **Deployment** | Siteman (PWA) + SCP (server binary) | PWA is static files. Server is a single Go binary with systemd. |
 
 ### Why Not PostgreSQL?
 
-Two users, 276 restaurants, ~1000 rows of awards. SQLite handles millions of rows. WAL mode gives us concurrent reads with single-writer, which is fine. No admin, no daemon, easy backups (copy one file).
+Two users, 276 restaurants, ~1000 total rows across all tables. SQLite handles millions. WAL mode gives concurrent reads with single-writer. No daemon, no admin, backups are `cp suppr.db suppr.db.bak`.
 
 ### Why Not a Native Phone App?
 
 A PWA gives us:
-- Install to home screen (looks like a native app)
-- Works offline (service worker caches the shell)
-- Camera access (for food photos)
-- Push notifications (for reminders)
+- Install to home screen (looks native)
+- Camera access (for food photos at the restaurant)
 - No App Store review, no $99/year Apple dev account
-- One codebase for everything
+- Shared codebase with the desktop frontend
 
-### Why Tailscale?
+### Why Digital Ocean Instead of Local?
 
-`desktop.local` is only visible on your home LAN. When you're at a restaurant, you need access. Options:
-1. **Tailscale** (recommended): Free VPN mesh. Install on desktop + phones + laptops. Access via `https://desktop:8080` from anywhere. Encrypted, no port forwarding.
-2. **Cloudflare Tunnel**: Free, exposes the server to the internet behind Cloudflare. More complex setup.
-3. **Port forwarding + Dynamic DNS**: Old school, less secure.
+The previous design ran on `desktop.local` with Tailscale for remote access. Problems:
+- Desktop must be running 24/7
+- Tailscale adds complexity for two non-technical users (Meriam's phone)
+- No access if desktop is sleeping, updating, or off
 
-## Database Schema Evolution
+DO solves all of this. A $6/month droplet is always on, publicly accessible via `suppr.trueblocks.io`, and Caddy handles TLS automatically.
 
-Starting from the current schema, we add:
+## Server Binary
 
-```sql
--- User accounts (just you two, but proper auth)
-CREATE TABLE users (
-    id        INTEGER PRIMARY KEY,
-    name      TEXT NOT NULL,
-    email     TEXT NOT NULL UNIQUE,
-    password  TEXT NOT NULL,  -- bcrypt hash
-    prefs     TEXT            -- JSON: home_lat, home_lng, default_radius, dietary, etc.
-);
+The API server binary lives at `cmd/suppr-server/main.go`. It:
 
--- Visit log
-CREATE TABLE visits (
-    id            INTEGER PRIMARY KEY,
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-    user_id       INTEGER NOT NULL REFERENCES users(id),
-    date          TEXT NOT NULL,       -- ISO date
-    rating        INTEGER,            -- 1-5 stars
-    occasion      TEXT,               -- date-night, casual, celebration, etc.
-    notes         TEXT,
-    created_at    TEXT DEFAULT (datetime('now'))
-);
+1. Opens (or creates) the SQLite database at `/data/suppr/suppr.db`
+2. Runs schema migrations
+3. Sets up the chi router with middleware (auth, logging, CORS)
+4. Listens on `localhost:8420`
+5. Caddy reverse-proxies `suppr.trueblocks.io/api/*` to it
 
--- Restaurant tags (vibe, features)
-CREATE TABLE tags (
-    id            INTEGER PRIMARY KEY,
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-    tag           TEXT NOT NULL,       -- byob, outdoor, romantic, lively, etc.
-    UNIQUE(restaurant_id, tag)
-);
+```go
+func main() {
+    db := db.Open("/data/suppr/suppr.db")
+    defer db.Close()
 
--- Price range added to restaurants
-ALTER TABLE restaurants ADD COLUMN price_range INTEGER; -- 1-4
-
--- Geocoding
-ALTER TABLE restaurants ADD COLUMN latitude  REAL;
-ALTER TABLE restaurants ADD COLUMN longitude REAL;
-
--- Reservation tracking
-CREATE TABLE reservations (
-    id            INTEGER PRIMARY KEY,
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-    date          TEXT NOT NULL,
-    time          TEXT NOT NULL,
-    party_size    INTEGER DEFAULT 2,
-    platform      TEXT,               -- opentable, resy, phone, walk-in
-    confirmation  TEXT,               -- confirmation number
-    notes         TEXT,
-    status        TEXT DEFAULT 'confirmed', -- confirmed, cancelled, completed
-    created_by    INTEGER REFERENCES users(id),
-    created_at    TEXT DEFAULT (datetime('now'))
-);
-
--- Calendar events (linked to reservations or standalone)
-CREATE TABLE calendar_events (
-    id              INTEGER PRIMARY KEY,
-    reservation_id  INTEGER REFERENCES reservations(id),
-    title           TEXT NOT NULL,
-    date            TEXT NOT NULL,
-    time            TEXT,
-    notes           TEXT,
-    created_at      TEXT DEFAULT (datetime('now'))
-);
-
--- Web intelligence (cron job findings)
-CREATE TABLE intel (
-    id            INTEGER PRIMARY KEY,
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-    type          TEXT NOT NULL,       -- closure, menu-change, award, discount, event, news
-    headline      TEXT NOT NULL,
-    detail        TEXT,
-    source_url    TEXT,
-    discovered_at TEXT DEFAULT (datetime('now')),
-    dismissed     INTEGER DEFAULT 0    -- user can dismiss stale intel
-);
-
--- Weekly poll (which restaurant this week?)
-CREATE TABLE polls (
-    id         INTEGER PRIMARY KEY,
-    week_start TEXT NOT NULL,          -- ISO date of Monday
-    status     TEXT DEFAULT 'open',    -- open, decided, skipped
-    winner_id  INTEGER REFERENCES restaurants(id),
-    created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE poll_votes (
-    id            INTEGER PRIMARY KEY,
-    poll_id       INTEGER NOT NULL REFERENCES polls(id),
-    user_id       INTEGER NOT NULL REFERENCES users(id),
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-    notes         TEXT,
-    created_at    TEXT DEFAULT (datetime('now'))
-);
+    r := api.NewRouter(db)
+    log.Println("suppr-server listening on :8420")
+    http.ListenAndServe(":8420", r)
+}
 ```
 
-## API Design
+## Authentication
+
+API key per user. Two keys, stored in the Users table. Every request must include `X-API-Key`.
+
+```go
+func AuthMiddleware(db *db.DB) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            key := r.Header.Get("X-API-Key")
+            user, err := db.UserByAPIKey(key)
+            if err != nil {
+                http.Error(w, "unauthorized", http.StatusUnauthorized)
+                return
+            }
+            ctx := context.WithValue(r.Context(), userKey, user)
+            next.ServeHTTP(w, r.WithContext(ctx))
+        })
+    }
+}
+```
+
+No login flow, no sessions, no JWT. The API key is stored in:
+- Desktop: `~/.local/share/trueblocks/suppr/config.json`
+- PWA: `localStorage`
+
+## Database
+
+SQLite with WAL mode, stored at `/data/suppr/suppr.db` on DO.
+
+### Tables
+
+| Table | Description |
+|-------|-------------|
+| Restaurants | Core records: name, address, city, state, zip, neighborhood, cuisine, founder, chef, website, phone, status, source, price_range, byob, outdoor, reservations, lat/lng, notes |
+| AwardSources | Award-granting organizations (4 rows: Philly Mag, Michelin, James Beard, Check Please) |
+| AwardSourceUrls | Provenance URLs for each year's award list (9 rows of Wayback Machine captures) |
+| Awards | Restaurant ↔ award source ↔ year with rank |
+| Episodes | Check, Please! appearances: restaurant, season, episode, video_url |
+| Users | 2 rows with name, email, API key |
+| Visits | Visit log: restaurant, user, date, rating, occasion, spend, notes |
+| Photos | Photo metadata (files stored on DO filesystem at `/data/suppr/photos/`) |
+| Tags | Flexible tagging: restaurant ↔ tag |
+| Intel | Restaurant news, tips, closings, openings |
+| Lists | Named custom lists (Date Night, BYOB favorites, etc.) |
+| ListItems | List membership: list ↔ restaurant |
+
+### Schema Conventions
+
+- PascalCase table names
+- camelCase for ID columns (restaurantID, awardID)
+- snake_case for all other columns
+- `created_at` and `modified_at` timestamps on all tables
+- FTS5 virtual table for full-text search across restaurants and intel
+
+### Backups
+
+Daily cron on DO: `cp /data/suppr/suppr.db /data/suppr/backups/suppr-$(date +%Y%m%d).db`. Keep 30 days. The database is small enough that a full copy takes milliseconds.
+
+## API Surface
+
+~60 REST endpoints. Full details in `api-surface.md`. Summary:
 
 ```
-Authentication:
-  POST   /api/login                    → session token
-
 Restaurants:
-  GET    /api/restaurants              → list (with filters: cuisine, neighborhood, price, tags)
-  GET    /api/restaurants/:id          → detail (includes awards, appearances, visits, intel)
-  PATCH  /api/restaurants/:id          → update (price_range, tags, status, etc.)
+  GET    /api/restaurants              → list (filterable)
+  GET    /api/restaurants/:id          → detail
+  POST   /api/restaurants              → create
+  PATCH  /api/restaurants/:id          → partial update
+  DELETE /api/restaurants/:id          → soft delete
+  + sub-resource endpoints for awards, episodes, visits, photos, intel, tags
 
 Visits:
-  GET    /api/visits                   → visit history (filterable by user, date range)
-  POST   /api/visits                   → log a visit (restaurant_id, rating, notes, occasion)
-  PATCH  /api/visits/:id               → update a visit
+  GET    /api/visits                   → all visits (filterable)
+  POST   /api/visits                   → log a visit
+  PATCH  /api/visits/:id              → update
+  DELETE /api/visits/:id              → delete
+
+Awards, Episodes, Intel, Photos, Tags, Lists:
+  Standard CRUD patterns per api-surface.md
 
 Recommendations:
-  GET    /api/recommend                → "where tonight?" (params: occasion, cuisine, price, mood)
+  GET    /api/recommend/tonight        → scoring-based suggestion
   GET    /api/recommend/bucket-list    → unvisited award-winners
   GET    /api/recommend/revisit        → loved but overdue
+  GET    /api/recommend/explore        → underexplored cuisines
 
-Reservations:
-  GET    /api/reservations             → upcoming reservations
-  POST   /api/reservations             → create reservation
-  PATCH  /api/reservations/:id         → update/cancel
-  DELETE /api/reservations/:id         → delete
+Users:
+  GET    /api/users/me                 → current user
+  PATCH  /api/users/me                → update preferences
 
-Calendar:
-  GET    /api/calendar                 → events for date range
-  GET    /api/calendar/ical            → iCal feed (subscribe from Apple Calendar)
-
-Polls:
-  GET    /api/polls/current            → this week's poll
-  POST   /api/polls/current/vote       → cast vote
-  GET    /api/polls/history            → past polls
-
-Intel:
-  GET    /api/intel                    → recent discoveries
-  POST   /api/intel/:id/dismiss        → dismiss stale intel
+Health:
+  GET    /api/health                   → server status
 ```
 
-## Cron Jobs (launchd)
+### PATCH Semantics
 
-| Job | Schedule | What It Does |
-|-----|----------|-------------|
-| **Freshness check** | Daily, 6am | For each restaurant, check if website is still up (HEAD request). Flag closures. |
-| **News crawler** | Daily, 7am | Search Google News for each restaurant name + Philadelphia. Store new articles in `intel`. |
-| **Award scanner** | Monthly, 1st | Check Philly Mag, Eater, Infatuation for new lists. |
-| **Weekly poll** | Monday 9am | Create new poll, email both users with top suggestions + voting link. |
-| **Reservation reminder** | Daily, 10am | Email reminder for reservations in next 48 hours. |
-| **Weekly digest** | Friday 5pm | Email summary: intel highlights, upcoming reservation, poll results, "try this weekend" suggestion. |
+All updates use PATCH with partial payloads. The handler receives `map[string]any`, validates each field, and updates only what's provided. This maps directly to the EditableField pattern in the frontend.
 
-### News Crawler Strategy
+### Photo Storage
 
-For 276 restaurants, we can't hit Google 276 times daily. Instead:
-1. Batch by priority: check award-winners (196) weekly, others monthly
-2. Use Google News RSS: `https://news.google.com/rss/search?q="restaurant+name"+Philadelphia` — no API key needed, no rate limiting on RSS
-3. Deduplicate by URL
-4. Only store genuinely new intel (new URLs not seen before)
+Photos are stored as files on DO at `/data/suppr/photos/{restaurantID}/{filename}`. The API handles upload (multipart POST), metadata storage (Photos table), and download (file streaming).
 
-## Frontend Pages
+## Deployment
 
-### Desktop/Laptop Views
-1. **Dashboard** — Intel feed, upcoming reservations, this week's poll, quick "tonight" button
-2. **Restaurant Directory** — Current grid view, enhanced with price/tags/visit status
-3. **Restaurant Detail** — Awards, visits, intel, reservation history, "book it" button
-4. **50 Best by Year** — Current view
-5. **Episodes** — Current view
-6. **Visit History** — Timeline of where you've been, ratings, notes
-7. **Calendar** — Month view with reservations and events
-8. **Settings** — User prefs, home location, dietary restrictions
-
-### Phone Views (PWA)
-Same pages, responsive layout. Key phone-specific features:
-1. **Quick Review** — While at restaurant: star rating + quick notes + photo. Minimal UI, fast.
-2. **"Where are we going?"** — Tonight's recommendation, one tap to navigate (opens Maps)
-3. **Reservation card** — Confirmation number, time, address, one tap to call
-
-## Deployment on desktop.local
-
-```bash
-# Project structure on desktop.local
-~/checkplease/
-├── checkplease.db          # the database
-├── server.py               # FastAPI app
-├── cmd/                    # maintenance scripts
-├── docs/                   # static site (fallback)
-├── design/                 # design docs
-├── static/                 # CSS, JS, icons, manifest
-│   ├── app.js
-│   ├── style.css
-│   ├── manifest.json       # PWA manifest
-│   └── sw.js               # service worker
-├── templates/              # HTML templates (Jinja2)
-├── cron/                   # launchd plist files
-│   ├── com.checkplease.freshness.plist
-│   ├── com.checkplease.news.plist
-│   ├── com.checkplease.poll.plist
-│   └── com.checkplease.digest.plist
-└── backups/                # daily DB snapshots
-```
-
-### Server startup
-```bash
-# Install (one time)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install fastapi uvicorn aiofiles python-multipart bcrypt
-
-# Run
-uvicorn server:app --host 0.0.0.0 --port 8080
-
-# Or via launchd for auto-start on boot
-```
-
-## Development Workflow
-
-You develop on your laptop, the real app runs on `desktop.local`. Two options:
-
-### Option A: Live Deploy (preferred)
-
-Your laptop is the development machine. Every push to the server restarts the live app. You're always using the real database and the real server — no stale copies.
+### Caddy Config
 
 ```
-laptop (develop)                    desktop.local (run)
-┌─────────────┐    git push /       ┌──────────────────┐
-│ Edit code   │───rsync──────────→  │ Server restarts  │
-│ Test locally│    (Makefile)        │ Real DB, real app│
-│ (optional)  │                     │ Serves everyone  │
-└─────────────┘                     └──────────────────┘
+suppr.trueblocks.io {
+    handle /api/* {
+        reverse_proxy localhost:8420
+    }
+    handle {
+        root * /var/www/suppr
+        try_files {path} /index.html
+        file_server
+    }
+}
 ```
 
-**How it works:**
-- A `Makefile` target: `make deploy`
-  - `rsync` copies code (not the DB) to `desktop.local:~/checkplease/`
-  - `ssh desktop.local 'launchctl kickstart -k gui/$(id -u)/com.checkplease.server'` restarts the server
-- Takes ~2 seconds. You see changes live immediately.
-- The database lives ONLY on `desktop.local` — never copied to laptop
-- To query the DB during development, use `ssh desktop.local sqlite3 ~/checkplease/checkplease.db "..."`
-- The `checkplease` CLI tool can work in two modes:
-  - `--local` (optional): uses a local dev copy of the DB
-  - Default: hits the server API at `http://desktop.local:8080/api/...`
+### Systemd Service
 
-**Why this is safe:**
-- Code is versioned in git — easy to roll back
-- Database is never overwritten by deploy (rsync excludes `checkplease.db`, `backups/`, `.venv/`)
-- Server restart is graceful (in-flight requests complete)
+```ini
+[Unit]
+Description=suppr API server
+After=network.target
 
-### Option B: Local Dev Server (fallback)
+[Service]
+ExecStart=/usr/local/bin/suppr-server
+WorkingDirectory=/data/suppr
+Restart=always
+RestartSec=5
 
-Run the server locally on your laptop with a stale DB snapshot. Publish to desktop.local only when ready.
-
-```
-laptop                              desktop.local
-┌──────────────┐                    ┌──────────────────┐
-│ Local server │                    │ Production server│
-│ Stale DB copy│   make publish →   │ Real DB          │
-│ Port 8080    │                    │ Port 8080        │
-└──────────────┘                    └──────────────────┘
+[Install]
+WantedBy=multi-user.target
 ```
 
-- `make snapshot` — pulls a DB copy from desktop.local for local testing
-- `make publish` — same as `make deploy` above
-- Downside: you test against stale data, visit logs diverge
+### Deploy Steps
 
-**Recommendation:** Option A. You're the only developer, and the deploy is a 2-second rsync. Developing against the real app and real data catches problems faster. Option B is there if desktop.local is down or unreachable.
+**PWA**: `yarn build` → siteman deploys to `/var/www/suppr/` on DO.
 
-### Makefile
+**API server**: Cross-compile → SCP → restart systemd.
 
-```makefile
-SERVER = desktop.local
-REMOTE_DIR = ~/checkplease
-EXCLUDE = --exclude=checkplease.db --exclude=backups/ --exclude=.venv/ \
-          --exclude=.git/ --exclude=__pycache__/ --exclude='*.pyc' \
-          --exclude=checkplease.xlsx
+**Both**: `make deploy`.
 
-deploy:
-	rsync -avz $(EXCLUDE) ./ $(SERVER):$(REMOTE_DIR)/
-	ssh $(SERVER) 'launchctl kickstart -k gui/$$(id -u)/com.checkplease.server'
-	@echo "Deployed and restarted."
+## File Layout on DO
 
-snapshot:
-	scp $(SERVER):$(REMOTE_DIR)/checkplease.db ./checkplease-dev.db
-	@echo "Snapshot saved to checkplease-dev.db"
+```
+/data/suppr/
+├── suppr.db                    # SQLite database
+├── photos/                     # Uploaded photos
+│   └── {restaurantID}/         # By restaurant
+└── backups/                    # Daily DB snapshots
 
-logs:
-	ssh $(SERVER) 'tail -f $(REMOTE_DIR)/logs/server.log'
+/var/www/suppr/                 # PWA static files (siteman)
+├── index.html
+├── assets/
+├── manifest.json
+└── sw.js
 
-status:
-	ssh $(SERVER) 'launchctl print gui/$$(id -u)/com.checkplease.server'
+/usr/local/bin/suppr-server     # API server binary
 ```
 
-## Backup Strategy
+---
 
-SQLite is a single file — backups are trivial. Three layers of protection:
+## Toward Peer-to-Peer: The Federation Architecture
 
-### Layer 1: Daily Snapshots (on desktop.local)
+The DO server is Stage 1 infrastructure — a pragmatic choice for a couple who wants the app to work today. But suppr is designed with an eye toward a future where each couple runs their own node and nodes talk to each other directly. This section describes how we get there.
 
-A launchd job runs daily at 3am:
-```bash
-#!/bin/bash
-DB=~/checkplease/checkplease.db
-BACKUP_DIR=~/checkplease/backups
-DATE=$(date +%Y-%m-%d)
-cp "$DB" "$BACKUP_DIR/checkplease-$DATE.db"
-# Keep 90 days
-find "$BACKUP_DIR" -name "checkplease-*.db" -mtime +90 -delete
+### The Path
+
+```
+Today (Stage 1):     One server, one couple, centralized
+                     ┌─────────┐
+                     │  DO     │
+                     │  suppr  │
+                     └─────────┘
+
+Near future (Stage 2): Two servers, two couples, independent
+                     ┌─────────┐     ┌─────────┐
+                     │  Our    │     │  Their  │
+                     │  suppr  │     │  suppr  │
+                     └─────────┘     └─────────┘
+
+Federation (Stage 3): Two servers, linked
+                     ┌─────────┐────▶┌─────────┐
+                     │  Our    │◀────│  Their  │
+                     │  suppr  │     │  suppr  │
+                     └─────────┘     └─────────┘
+
+Groups (Stage 4):    Mesh of servers
+                     ┌─────────┐────▶┌─────────┐
+                     │  A      │◀────│  B      │
+                     └────┬────┘     └────┬────┘
+                          │               │
+                     ┌────┴────┐     ┌────┴────┐
+                     │  C      │◀────│  D      │
+                     └─────────┘     └─────────┘
 ```
 
-### Layer 2: Weekly Off-Site (to your laptop)
+### What Makes This Possible
 
-A launchd job on your laptop (or a cron entry) pulls the latest backup weekly:
-```bash
-#!/bin/bash
-scp desktop.local:~/checkplease/backups/checkplease-$(date +%Y-%m-%d).db \
-    ~/Desktop/CheckPlease/backups/
+Several architectural decisions we've already made set up the P2P path:
+
+1. **SQLite, not Postgres.** Each node is a single file. Easy to back up, easy to move, easy to run on a Raspberry Pi or a phone. No database server to configure.
+
+2. **Go binary, not a Python/Node stack.** Cross-compile for any platform. A single binary that runs anywhere — laptop, VPS, Pi, even a phone via Termux.
+
+3. **API-first design.** The Wails app already talks to the server via HTTP. Federation is just another HTTP client — one server talking to another server's API.
+
+4. **API key auth, not session-based.** Easy to extend to inter-node auth. A peer node authenticates with an API key just like a user does.
+
+5. **PATCH semantics.** Partial updates transfer cleanly between nodes — you don't need to sync entire records, just changes.
+
+### The Federation Protocol
+
+Federation means: sharing recommendations between nodes without merging databases. Each couple keeps their own data. What flows between nodes is a curated feed of what you want to share.
+
+#### Data That Flows
+
+| Shareable | Format | Direction |
+|-----------|--------|-----------|
+| Restaurant discovery | "We found a great place" — name, cuisine, neighborhood, why we liked it | Push to peers |
+| Rating signal | "We went to X, rated it 4/5" — no details unless you choose to share | Push to peers |
+| Photo | A photo of a dish, with restaurant context | Push to peers (optional) |
+| Intel | "X closed" or "X opened a second location" | Push to peers |
+
+#### Data That Stays Home
+
+| Private | Why |
+|---------|-----|
+| Visit dates and frequency | Your schedule is nobody's business |
+| Spend amounts | Financial privacy |
+| Personal notes | "Meriam didn't like the server" stays between us |
+| Lists | Your "Date Night" list is curated for you |
+| Full recommendation history | The algorithm is personal |
+
+#### The Message Format
+
+A recommendation share is a simple JSON message, signed with the sender's key:
+
+```json
+{
+  "type": "recommendation",
+  "from": {
+    "node": "suppr.trueblocks.io",
+    "couple": "Jay & Meriam"
+  },
+  "restaurant": {
+    "name": "Zahav",
+    "cuisine": "Israeli",
+    "neighborhood": "Society Hill",
+    "city": "Philadelphia",
+    "state": "PA",
+    "website": "https://zahavrestaurant.com"
+  },
+  "signal": {
+    "rating": 5,
+    "visitCount": 3,
+    "lastVisit": "2026-04",
+    "tags": ["date-night", "special-occasion"],
+    "note": "The lamb shoulder is life-changing. Get the whole thing."
+  },
+  "ts": "2026-05-17T14:30:00Z",
+  "sig": "..."
+}
 ```
 
-Or add it to the Makefile:
-```makefile
-backup:
-	mkdir -p backups
-	scp $(SERVER):$(REMOTE_DIR)/checkplease.db backups/checkplease-$$(date +%Y-%m-%d).db
-	@echo "Backup saved."
+This is enough for the receiving node to:
+- Match against their own restaurant database (by name + city, fuzzy)
+- Create a new restaurant record if they don't have it
+- Store the recommendation as a special type of Intel ("Jay & Meriam recommend this")
+- Factor it into their own recommendation engine ("friends loved this" bonus)
+
+#### Peer Management
+
+```
+GET    /api/peers                → list linked peers
+POST   /api/peers                → invite a peer (generates a pairing token)
+POST   /api/peers/accept         → accept an invitation
+DELETE /api/peers/:id            → unlink a peer
+GET    /api/peers/:id/feed       → what they've shared with us
+POST   /api/peers/:id/share      → share something with them
 ```
 
-### Layer 3: Git for Code (not data)
+Pairing works like Bluetooth: one side generates a token (or QR code), the other side enters it. Both sides now have each other's API endpoint and a shared key. No central directory.
 
-The code (server, templates, static files, cron scripts) lives in a git repo. Push to GitHub for off-site code backup. The database is `.gitignore`d — it's data, not code.
+#### Sync Mechanics
 
-### Recovery
+Federation is **push-based, not pull-based**. When you share a recommendation, your server POSTs it to the peer's `/api/federation/inbox` endpoint. The peer processes it asynchronously. There's no polling, no subscription, no WebSocket.
 
-| Scenario | Recovery |
-|----------|----------|
-| Accidental bad data | Restore from yesterday's snapshot: `cp backups/checkplease-YYYY-MM-DD.db checkplease.db` |
-| Server disk failure | Restore from laptop's weekly backup + rebuild venv |
-| Both machines die | Restore code from GitHub + most recent backup from wherever survives |
+```
+Our server                              Their server
+    │                                        │
+    │  POST /api/federation/inbox            │
+    │  { recommendation about Zahav }         │
+    │───────────────────────────────────────▶│
+    │                                        │
+    │  201 Created                           │
+    │◀───────────────────────────────────────│
+    │                                        │
+```
 
-## Phasing
+If the peer is offline, the message is queued locally and retried with exponential backoff. Messages are idempotent (keyed by hash), so duplicates are harmless.
 
-### Phase 1: Server Foundation (get it running on desktop.local)
-- [ ] Set up project on desktop.local (clone/copy files, venv)
-- [ ] FastAPI server serving the current static site
-- [ ] API endpoints: restaurants (list, detail), basic auth (2 hardcoded users)
-- [ ] Tailscale setup for remote access
-- [ ] launchd plist to auto-start server on boot
-- [ ] Verify access from both laptops + phones
+### What Changes in the Codebase
 
-### Phase 2: Visit Logging + Basic Recommendations
-- [ ] visits table + API
-- [ ] "Quick Review" phone UI
-- [ ] `GET /api/recommend` with basic scoring (award rank + unvisited bonus)
-- [ ] "Bucket List" and "Revisit" endpoints
-- [ ] Price range + tags for top 50 restaurants (manual entry through UI)
+The federation layer is additive — it doesn't change existing code, it extends it.
 
-### Phase 3: Weekly Polls + Email
-- [ ] polls/votes tables + API
-- [ ] Weekly poll creation (cron)
-- [ ] Email setup (Gmail SMTP app password)
-- [ ] Weekly digest email with poll, suggestions, intel
-- [ ] Poll voting UI (email links to web page)
+| New Package | Purpose |
+|-------------|---------|
+| `internal/api/federation.go` | Inbox handler, outbox sender, peer management endpoints |
+| `internal/db/peers.go` | Peers table, outbox queue, inbox log |
+| `pkg/models/federation.go` | Recommendation, Intel, and Peer types for federation messages |
 
-### Phase 4: Reservations + Calendar
-- [ ] reservations table + API + UI
-- [ ] Calendar view in web UI
-- [ ] iCal feed endpoint (subscribe from Apple Calendar)
-- [ ] Reservation reminders (email)
+New tables:
 
-### Phase 5: Intelligence Crawler
-- [ ] Google News RSS crawler (cron)
-- [ ] Website freshness checker (cron)
-- [ ] Intel feed in dashboard UI
-- [ ] Dismiss/archive intel
+```sql
+CREATE TABLE Peers (
+    peerID       INTEGER PRIMARY KEY,
+    name         TEXT NOT NULL,
+    endpoint     TEXT NOT NULL,
+    shared_key   TEXT NOT NULL,
+    status       TEXT DEFAULT 'active',
+    created_at   TEXT DEFAULT (datetime('now'))
+);
 
-### Phase 6: Polish
-- [ ] PWA manifest + service worker (offline support, install prompt)
-- [ ] Photo uploads for visits
-- [ ] Geocoding + map view + "near me" recommendations
-- [ ] Smart recommendations (learn from visit history patterns)
-- [ ] Reservation platform deep links (OpenTable, Resy)
+CREATE TABLE Outbox (
+    outboxID     INTEGER PRIMARY KEY,
+    peerID       INTEGER NOT NULL REFERENCES Peers(peerID),
+    message      TEXT NOT NULL,
+    status       TEXT DEFAULT 'pending',
+    attempts     INTEGER DEFAULT 0,
+    last_attempt TEXT,
+    created_at   TEXT DEFAULT (datetime('now'))
+);
 
-## Open Questions — Resolved
+CREATE TABLE Inbox (
+    inboxID      INTEGER PRIMARY KEY,
+    peerID       INTEGER NOT NULL REFERENCES Peers(peerID),
+    message_hash TEXT NOT NULL UNIQUE,
+    message      TEXT NOT NULL,
+    processed    INTEGER DEFAULT 0,
+    created_at   TEXT DEFAULT (datetime('now'))
+);
+```
 
-1. **Hosting:** Digital Ocean servers (always-on, root access). Deployment via `siteman` (Hugo push tool already in use). Stack details deferred until proper GitHub repo is set up in the uni-repo. No Tailscale needed — public server.
-2. **Server uptime:** 24/7 on Digital Ocean. Cron jobs will work.
-3. **Email:** Deferred to implementation time.
-4. **Tagging:** Worth doing. Automate by scraping restaurant websites for price signals, BYOB mentions, vibe keywords, menus, etc. Manual cleanup pass after.
-5. **Photos:** Yes — food photo uploads with reviews.
-6. **SSH/Deploy:** Keys already working under siteman. Will wire up when ready.
-7. **Git repo:** Public GitHub is fine. Only code goes to GitHub — the database (which has no personal data beyond your visit notes) stays on the server, never pushed to git. User passwords would be bcrypt hashes in the DB, not in code. Email addresses could be env vars or a config file that's `.gitignore`d.
+### The Desktop App Becomes the Server
+
+In the fully realized version, the Wails desktop app doesn't need DO at all. The desktop app IS the server:
+
+1. The Go backend runs a chi server on a local port
+2. The PWA connects to the desktop directly (on the home LAN, or via a tunnel)
+3. Federation messages go directly between desktop apps
+
+This inverts the current architecture:
+
+```
+Today:   Wails app → pkg/client/ → HTTP → DO server → SQLite
+Future:  Wails app → internal/db/ → SQLite (local)
+         + federation layer ↔ other Wails apps
+```
+
+The `pkg/client/` layer becomes optional — used only when you want to hit a remote server. The app can work in either mode:
+- **Hosted mode**: API on DO, clients connect remotely (current design)
+- **Local mode**: Database on the laptop, PWA connects on LAN
+- **Hybrid**: Database on laptop, DO acts as a relay for federation messages when laptops are sleeping
+
+### Why Not Start with P2P?
+
+Because it's harder to debug, harder to deploy for non-technical users, and harder to make reliable. The DO server gives us:
+- Always-on access (no "is the laptop awake?")
+- A stable URL for the PWA
+- Simple deployment
+- A working app today while we think about federation tomorrow
+
+The key insight: **the API is the same either way.** Whether the server runs on DO or on your laptop, the endpoints, the auth, the database schema — all identical. The migration from hosted to local to federated is a deployment change, not a rewrite.
+
+### Timeline Intuition
+
+| Stage | When | What Changes |
+|-------|------|-------------|
+| 1 (Current) | Now | DO server, 2 users, done |
+| 2 (Second couple) | When a friend says "I want this" | They deploy their own instance. We help them set it up. No code changes needed. |
+| 3 (Federation) | When both couples want to share | Add federation layer (~500 lines of Go). Peer pairing. Push-based sharing. |
+| 4 (Groups) | When 3+ couples are linked | Multi-peer fan-out. Group recommendation weighting. Group dining coordination. |
+| 5 (Local mode) | When the architecture is proven | Wails app becomes the server. DO becomes optional relay. Full sovereignty. |
+
+Stage 2 is free — it's just deploying the same binary twice. Stage 3 is the real work, but it's bounded: an inbox, an outbox, a peer table, and a share button. The existing API surface doesn't change.
+
+---
+
+## Future Possibilities (Not Planned for Stage 1)
+
+- **Cron workers**: Auto-crawl restaurant websites for closures, news, menu changes. Populate Intel table automatically.
+- **Email digests**: Weekly summary of intel, recommendations, and upcoming visits.
+- **Reservation tracking**: Confirmation numbers, reminders. Currently use Resy/OpenTable directly.
+- **Calendar integration**: iCal feed for reservations.
+- **Polls**: "Where should we eat this week?" voting between the two users.

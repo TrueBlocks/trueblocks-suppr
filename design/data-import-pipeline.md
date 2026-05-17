@@ -6,7 +6,7 @@ This document describes how to migrate the existing CheckPlease database into su
 
 ## Source Data
 
-The original database lives at `~/Desktop/CheckPlease/checkplease.db` (archived copy at `XYZ/original/checkplease.db`).
+The original database lives at `~/Desktop/CheckPlease/checkplease.db` (archived copy at `original/checkplease.db`).
 
 ### Existing Tables
 

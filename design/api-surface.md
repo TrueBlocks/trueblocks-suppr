@@ -148,8 +148,8 @@ PATCH sends only changed fields. This maps perfectly to the Wails app's `Editabl
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/me` | Current user profile (from API key) |
-| PATCH | `/api/me` | Update prefs (home location, dietary, radius) |
+| GET | `/api/users/me` | Current user profile (from API key) |
+| PATCH | `/api/users/me` | Update prefs (home location, dietary, radius) |
 
 ### Health
 
