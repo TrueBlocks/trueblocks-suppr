@@ -99,6 +99,112 @@ cmd/suppr-geocode/→ internal/db/
 
 ---
 
+## Platform Package Integration
+
+suppr lives in the `trueblocks-art` mono-repo alongside works, poetry, siteman, and acrylic. Shared code lives in `packages/` at the repo root:
+
+```
+trueblocks-art/
+├── packages/
+│   ├── ui/          → @trueblocks/ui
+│   └── scaffold/    → @trueblocks/scaffold
+├── suppr/
+│   └── frontend/
+│       └── vite.config.ts   ← aliases resolve packages from source
+├── works/
+├── poetry/
+└── siteman/
+```
+
+### Vite Alias Configuration
+
+In `frontend/vite.config.ts`:
+
+```typescript
+import path from 'path';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@app': path.resolve(__dirname, './wailsjs/go/app/App'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@wailsjs': path.resolve(__dirname, './wailsjs'),
+      '@models': path.resolve(__dirname, './wailsjs/go/models'),
+      '@runtime': path.resolve(__dirname, './wailsjs/runtime'),
+      '@trueblocks/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@trueblocks/scaffold': path.resolve(__dirname, '../../packages/scaffold/src'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8420',
+    },
+  },
+});
+```
+
+Key points:
+- **Packages are resolved from source** — not published to npm, not built separately
+- `@trueblocks/ui` and `@trueblocks/scaffold` point to `../../packages/{name}/src`
+- `@app` points to Wails auto-generated bindings (never edit these files)
+- `@models` points to Wails auto-generated Go model types
+
+### What Each Package Provides
+
+**`@trueblocks/ui`** (used extensively):
+- `AppLayout` + `NavItems` — the full app shell with resizable sidebar
+- `DataTable` + `createDataTable` — feature-complete data table
+- `DetailHeader` — standard detail page header with prev/next navigation
+- `EditableField` — click-to-edit inline text editing
+- `TabView` — tabbed content with tab persistence
+- `DashboardCard` + `StatRow` — dashboard stat display
+- `ConfirmDeleteModal` — standardized delete confirmation
+- `KeyboardHints` — overlay showing available keyboard shortcuts
+- `SplashScreen` — loading screen
+- `useTableState`, `useTableKeyboard`, `useTablePersistence` — table state management
+- `useWindowGeometry` — window position/size persistence
+- `usePersistedTab`, `usePersistedValue`, `createPersistedTabContext` — state persistence
+- `createAppTheme`, `ThemeProvider`, `useTheme`, `ThemeSelector` — theming
+- `initLogger`, `Log`, `LogErr`, `LogDbg`, `LogWarn` — logging (use instead of console.log)
+- `initOS`, `openURL` — OS utilities
+- Re-exports of Mantine components and hooks (so you import from `@trueblocks/ui` not directly from `@mantine/*`)
+
+**`@trueblocks/scaffold`** (used for navigation and data fetching):
+- `NavigationProvider` + `useNavigation` — entity navigation context (prev/next/push/pop stack)
+- `useDetailPageNavigation` — auto-registers Arrow Left/Right, Home/End, Cmd+Shift+Left for detail pages
+- `makeEntityHooks(api)` — factory that creates `useList()` and `useOne()` hooks from an entity API definition
+- `useAsync` — generic async data hook (data, loading, error, refetch)
+- `ReportShell` — report page chrome (description → loading → error → empty → content)
+
+### Import Patterns in suppr
+
+```typescript
+// Shell and layout
+import { AppLayout, NavItem } from '@trueblocks/ui';
+import { useHotkeys } from '@trueblocks/ui';  // re-exported from @mantine/hooks
+
+// Pages
+import { NavigationProvider, useNavigation } from '@trueblocks/scaffold';
+import { TabView, DataTable, DetailHeader, EditableField } from '@trueblocks/ui';
+import { useDetailPageNavigation, makeEntityHooks } from '@trueblocks/scaffold';
+
+// Logging
+import { Log, LogErr } from '@trueblocks/ui';
+
+// Theme
+import { ThemeProvider, createAppTheme } from '@trueblocks/ui';
+
+// Wails bindings (auto-generated — never edit)
+import { RestaurantList, RestaurantGet, RestaurantUpdate } from '@app';
+import { models } from '@models';
+```
+
+---
+
 ## Frontend: Wails + PWA from One Codebase
 
 The same React components serve both the Wails desktop app and the PWA. The difference is how API calls are made:

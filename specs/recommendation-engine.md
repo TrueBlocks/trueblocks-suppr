@@ -10,7 +10,7 @@ Each mode is a distinct query/scoring strategy, not four variations of one algor
 
 | Mode | Question It Answers | Returns |
 |------|--------------------|---------| 
-| **Tonight** | "Where should we eat?" | Top 5 scored restaurants |
+| **Tonight** | "Where should we eat?" | Ranked list, top result emphasized as THE answer |
 | **Bucket List** | "What haven't we tried that's supposedly great?" | Unvisited award-winners |
 | **Revisit** | "What did we love but haven't been to in a while?" | Highly-rated, overdue |
 | **Explore** | "What cuisines/neighborhoods are we missing?" | Underexplored areas with strong signals |
@@ -19,7 +19,7 @@ Each mode is a distinct query/scoring strategy, not four variations of one algor
 
 ## Mode A: "Tonight" (The Main Event)
 
-User optionally provides: occasion, cuisine, price, byob, mood. The engine scores every eligible restaurant and returns the top 5.
+User optionally provides: occasion, cuisine, price, byob, mood. The engine scores every eligible restaurant and returns a ranked list (configurable `result_count`, default 5). The UI emphasizes the #1 result as "the answer" — prominently displayed above the others. The ideal is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The remaining results are visible but secondary ("or if not that...").
 
 ### Eligibility Filter (eliminates before scoring)
 
@@ -48,14 +48,15 @@ score = quality_signal
 |-----------|-------|-------------|
 | **quality_signal** | 0–40 | Each 50 Best appearance = 5 pts, decayed by age: `5 × (1 / (current_year - award_year + 1))`. A 2026 award = 5 pts, a 2020 award = 0.83 pts. Check Please appearance = 3 pts flat. Max capped at 40. |
 | **visit_affinity** | -10 to +20 | If visited: `avg_rating × 4` (5-star = 20, 2-star = 8). Rated 1-2 stars becomes negative: `(rating - 3) × 5`. Never visited = 0 (neutral). |
-| **recency_penalty** | 0 to -15 | Visited in last 2 weeks = -15. Last month = -10. Last 3 months = -5. Over 3 months ago = 0. Never visited = 0. Prevents recommending where you just went. |
+| **recency_penalty** | 0 to -15 | Visited in last 2 weeks = -15. Last month = -10. Last 3 months = -5. Over 3 months ago = 0. Never visited = 0. Prevents recommending where you just went. Decay is rating-aware: 5-star restaurants decay at half rate (a 5-star visited 2 weeks ago = -7 instead of -15). The logic: places you loved should resurface sooner. |
 | **exploration_bonus** | 0 to +15 | Never visited + has quality signals = +15. Never visited + no quality signals = +5. Already visited = 0. Encourages trying new places. |
 | **occasion_match** | 0 to +10 | Tags include requested occasion/mood = +10. Partial match (e.g., "romantic" tag when "date-night" occasion) = +5. No match = 0. |
-| **turn_bonus** | 0 to +10 | If tit-for-tat is enabled and it's this user's turn to pick, boost restaurants they've favorited or tagged. See Preferences section. |
+| **turn_bonus** | 0 to +20 | If tit-for-tat is enabled and it's this user's turn to pick: their personal ratings count double in `visit_affinity` (effectively: `avg_rating × 8` instead of `× 4` for restaurants they've rated). Additionally, restaurants they've tagged or favorited get +10. The effect: the list reorders itself around the picker's preferences. See Preferences section. |
 | **friend_signal** | 0 to +10 | If a federated peer recommended this restaurant, +10. Configurable. See Preferences section. |
+| **distance_penalty** | 0 to -10 | If home_lat/home_lng are configured: penalizes restaurants far from home. Within 2 miles = 0. 2–5 miles = -3. 5–10 miles = -7. Over 10 miles = -10. Configurable radius threshold. Disabled (0) if no home location set. |
 | **jitter** | -3 to +3 | Random per-request. Prevents identical results on repeated queries. |
 
-**Total range**: roughly -28 to +108. Top 5 returned, sorted descending.
+**Total range**: roughly -38 to +118. Returned sorted descending, count set by `result_count` (default 5).
 
 ### One-Line Reason Generation
 
@@ -156,15 +157,18 @@ The recommendation engine is configurable. Both users must agree on configuratio
 | `exploration_weight` | 15 | Max points for never-visited places |
 | `quality_decay_rate` | 1.0 | Multiplier for award age decay (higher = more decay) |
 | `jitter_range` | 3 | Random ±N points per request |
-| `result_count` | 5 | How many recommendations to return |
+| `result_count` | 5 | How many recommendations to return (UI emphasizes #1) |
+| `distance_enabled` | true | Include distance penalty in scoring |
+| `distance_radius_miles` | 10 | Max radius before full penalty applies |
 
 ### Tit-for-Tat Logic
 
 When enabled, the system tracks whose turn it is to pick:
 - After a visit is logged, the *other* user gets "next pick" status
-- The user whose turn it is gets `turn_bonus` points added to restaurants they've tagged or favorited
-- The UI displays whose turn it is prominently
-- Either user can waive their turn ("you pick tonight")
+- The user whose turn it is gets their ratings doubled in visit_affinity AND +10 to their tagged/favorited restaurants
+- The effect: "the list reorders itself around her preferences, not mine" — the picker's taste dominates the ranking
+- The UI displays whose turn it is: a subtle text line ("Meriam's pick" or "Your pick")
+- Either user can waive their turn ("you pick tonight") — tap the turn indicator
 - Turn state is stored in a simple counter: `last_picker` in the config
 
 ### Mutual Consent

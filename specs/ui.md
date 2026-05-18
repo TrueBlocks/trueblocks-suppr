@@ -18,19 +18,140 @@ Title left, subtitle center, dark mode toggle right.
 
 ### Sidebar Navigation
 
-Collapsible, resizable sidebar with icon + label items.
+Uses `AppLayout` from `@trueblocks/ui` — the same component used by works, poetry, and siteman. Collapsible, resizable sidebar with icon + label items.
 
-| # | Nav Item | Icon | Has Tabs | Hotkey |
-|---|----------|------|----------|--------|
-| 1 | **Dashboard** | `IconChefHat` | No | Cmd+1 |
-| 2 | **Restaurants** | `IconToolsKitchen2` | List / Detail | Cmd+2 |
-| 3 | **Visits** | `IconCalendarEvent` | List / Detail | Cmd+3 |
-| 4 | **Awards** | `IconTrophy` | List / Detail | Cmd+4 |
-| 5 | **Episodes** | `IconDeviceTv` | List / Detail | Cmd+5 |
-| 6 | **Intel** | `IconNews` | List / Detail | Cmd+6 |
-| — | *(bottom section)* | | | |
-| 7 | **Recommend** | `IconSparkles` | No (wizard-style) | Cmd+7 |
-| 8 | **Settings** | `IconSettings` | Tabbed | Cmd+8 |
+**Implementation:** Each nav item is a `NavItem` object passed to `AppLayout`:
+
+```typescript
+interface NavItem {
+  id: string;
+  label: string;
+  icon: ElementType;  // Tabler icon component
+  badge?: number;     // optional count badge
+}
+```
+
+**Nav items (top section):**
+
+| # | id | label | icon | Has Tabs | Hotkey |
+|---|-----|-------|------|----------|--------|
+| 1 | `dashboard` | Dashboard | `IconChefHat` | No | Cmd+1 |
+| 2 | `restaurants` | Restaurants | `IconToolsKitchen2` | List / Detail | Cmd+2 |
+| 3 | `visits` | Visits | `IconCalendarEvent` | List / Detail | Cmd+3 |
+| 4 | `awards` | Awards | `IconTrophy` | List / Detail | Cmd+4 |
+| 5 | `episodes` | Episodes | `IconDeviceTv` | List / Detail | Cmd+5 |
+| 6 | `intel` | Intel | `IconNews` | List / Detail | Cmd+6 |
+
+**Nav items (bottom section, below divider):**
+
+| # | id | label | icon | Has Tabs | Hotkey |
+|---|-----|-------|------|----------|--------|
+| 7 | `recommend` | Recommend | `IconSparkles` | No (wizard-style) | Cmd+7 |
+| 8 | `settings` | Settings | `IconSettings` | Tabbed | Cmd+8 |
+
+**Sidebar behavior (from AppLayout):**
+- Resizable via mouse drag (min: 56px icon-only, max: 300px, default: 220px)
+- Collapses to icon-only mode when dragged below 80px threshold
+- Width persisted via Go backend: `GetSidebarWidth()` / `SetSidebarWidth()`
+- Re-clicking the active nav item cycles between list↔detail (for entities that have both)
+- Bottom items separated from top by a `Divider`
+- Active item visually highlighted
+- Badge supported (e.g., Intel could show undismissed count)
+
+---
+
+### List/Detail Pattern (Platform Standard)
+
+Every entity page (Restaurants, Visits, Awards, Episodes, Intel) follows the same structural pattern from `@trueblocks/scaffold` and `@trueblocks/ui`:
+
+```
+XxxPage.tsx
+  └── NavigationProvider (from @trueblocks/scaffold)
+       └── TabView (from @trueblocks/ui — list | detail)
+            ├── XxxList.tsx (list tab)
+            │    └── DataTable (from @trueblocks/ui)
+            └── XxxDetail.tsx (detail tab)
+                 └── DetailHeader (from @trueblocks/ui)
+                      └── Sub-tabs (entity-specific)
+```
+
+**NavigationProvider** manages the navigation stack:
+- `setItems(entityType, items, currentId)` — set the list for prev/next
+- `setCurrentId(id)` — select an item
+- `push(entityType, items, currentId, parentId)` — navigate into a sub-context (e.g., Restaurant → Visit)
+- `pop()` — return to parent context
+- `hasPrev` / `hasNext` / `goNext` / `goPrev` / `goHome` / `goEnd` — for DetailHeader arrows
+
+**TabView** manages the list↔detail toggle:
+- Tab state persisted to Go backend via `GetTab(viewId)` / `SetTab(viewId, tab)`
+- Active tab determined by whether a URL param (`:id`) is present
+- `createPersistedTabContext` from `@trueblocks/ui` for app-wide tab state
+
+**DataTable** (list tab) provides:
+- Multi-column sort (up to 4 levels)
+- Column filters (dropdown, range, grouped)
+- Global search with custom `searchFn`
+- Pagination (20/50/100/250 per page)
+- Row selection + keyboard navigation (via `useTableKeyboard`)
+- Full state persistence (sort, search, filter, page, selected row) via `loadState` / `saveState`
+- Delete/undelete with `ConfirmDeleteModal`
+- Custom row styling via `getRowStyle`
+
+**DetailHeader** (detail tab) provides:
+- Back button (returns to list)
+- Prev/next arrows with position display ("12 of 276")
+- Title area with icon + subtitle
+- Action slots (left and right)
+- Delete/undelete/permanent-delete buttons
+
+**useDetailPageNavigation** (from `@trueblocks/scaffold`) wires Arrow Left/Right, Home/End, and Cmd+Shift+Left hotkeys automatically for any detail page.
+
+**Sub-tabs on Detail views** use a vertical or horizontal tab pattern. Each entity's sub-tabs are specified in its Detail section below.
+
+---
+
+### Entity Sub-Tab Maps
+
+Complete sub-tab specifications for each entity's detail view:
+
+#### Restaurant Detail Sub-Tabs
+
+| # | Sub-Tab | Content | Editable |
+|---|---------|---------|----------|
+| 1 | **Overview** | Name, address, phone, website, status, cuisine, neighborhood, price range, BYOB, outdoor, reservations, tags (autocomplete), notes, map link | Yes (EditableField) |
+| 2 | **Visits** | DataTable of this restaurant's visits. "Log Visit" button. | Via Visit Detail |
+| 3 | **Awards** | DataTable of award appearances: source, year, rank, category | Read-only |
+| 4 | **Episodes** | DataTable of Check Please! appearances + embedded video player when `embed_url` available | Read-only |
+| 5 | **Photos** | Grid of photos. Upload button (opens file picker). Click to enlarge in modal. | Upload/delete |
+| 6 | **Intel** | DataTable of intel items related to this restaurant. Dismiss button per row. | Dismiss only |
+| 7 | **Lists** | Which lists contain this restaurant. Add/remove buttons. | Add/remove |
+| 8 | **Preview** | Cached website preview in iframe. Refresh + Open in Browser buttons. | Refresh only |
+
+#### Visit Detail Sub-Tabs
+
+| # | Sub-Tab | Content | Editable |
+|---|---------|---------|----------|
+| 1 | **Overview** | Restaurant (link), date, who, rating (stars), occasion, spend, notes | Yes (EditableField) |
+| 2 | **Photos** | Photos from this visit. Upload button. | Upload/delete |
+
+#### Award Detail Sub-Tabs
+
+| # | Sub-Tab | Content | Editable |
+|---|---------|---------|----------|
+| 1 | **Overview** | Restaurant (link), source, year, rank, category, url | Read-only |
+
+#### Episode Detail Sub-Tabs
+
+| # | Sub-Tab | Content | Editable |
+|---|---------|---------|----------|
+| 1 | **Overview** | Restaurant (link), season, episode number, air date, notes, embed_url | Read-only |
+| 2 | **Video** | Embedded video player (when embed_url present) | — |
+
+#### Intel Detail Sub-Tabs
+
+| # | Sub-Tab | Content | Editable |
+|---|---------|---------|----------|
+| 1 | **Overview** | Restaurant (link), type, headline, body, source URL, discovered date, dismissed toggle | Dismiss + edit body |
 
 ---
 
@@ -201,8 +322,9 @@ Wizard/tool UI — not a standard List/Detail.
 │  [✨ Recommend]                                      │
 │                                                      │
 │  ┌──────────────────────────────────────────────┐    │
-│  │ 1. Zahav — "Award-winning, you haven't been  │    │
+│  │ 🥇 Zahav — "Award-winning, you haven't been │    │
 │  │    in 4 months" — $$$$                        │    │
+│  ├──────────────────────────────────────────────┤    │
 │  │ 2. Vernick — "BYOB you loved last time" — $$ │    │
 │  │ 3. Talula's — "New 50 Best, never visited"   │    │
 │  └──────────────────────────────────────────────┘    │
@@ -211,7 +333,7 @@ Wizard/tool UI — not a standard List/Detail.
 └─────────────────────────────────────────────────────┘
 ```
 
-Each recommendation is a clickable card that navigates to Restaurant Detail.
+Each recommendation is a clickable card that navigates to Restaurant Detail. The #1 result is displayed prominently as THE answer — larger card, hero treatment. Results 2–5 are below in a compact list ("or if not that..."). The ideal UX is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The secondary results exist for when the answer doesn't land.
 
 ---
 
@@ -299,23 +421,72 @@ Results grouped by type with icons. Click → navigate to entity detail.
 
 ---
 
-### Hotkeys (Complete)
+### Hotkeys (Complete Registry)
+
+These follow the platform pattern established by works. All are registered via `useHotkeys` from `@mantine/hooks` (re-exported via `@trueblocks/ui`). The hook is called in `useKeyboardShortcuts.ts` (global) and in individual page components (context-specific).
+
+#### Global Hotkeys (registered in App.tsx / useKeyboardShortcuts.ts)
+
+| Key | Action | Notes |
+|-----|--------|-------|
+| Cmd+1 | Navigate to Dashboard | If already on Dashboard, no-op |
+| Cmd+2 | Navigate to Restaurants | If already there, cycle list↔detail |
+| Cmd+3 | Navigate to Visits | If already there, cycle list↔detail |
+| Cmd+4 | Navigate to Awards | If already there, cycle list↔detail |
+| Cmd+5 | Navigate to Episodes | If already there, cycle list↔detail |
+| Cmd+6 | Navigate to Intel | If already there, cycle list↔detail |
+| Cmd+7 | Navigate to Recommend | |
+| Cmd+8 | Navigate to Settings | |
+| Cmd+K | Open global search modal | |
+| Cmd+Shift+P | Open command palette | |
+| Cmd+R | Reload current view | Dispatches `reloadCurrentView` CustomEvent |
+| Cmd+Shift+D | Toggle show deleted items | Persisted in state.json |
+| Option+Shift+D | Toggle debug mode | |
+
+#### DataTable Hotkeys (registered in useTableKeyboard from @trueblocks/ui)
+
+| Key | Action | Condition |
+|-----|--------|-----------|
+| Arrow Down | Select next row | Focus in table |
+| Arrow Up | Select previous row | Focus in table |
+| Home | Select first row | Focus in table |
+| End | Select last row | Focus in table |
+| Enter | Open selected row (navigate to detail) | Row selected |
+| Arrow Left | Previous page | Not in an input field |
+| Arrow Right | Next page | Not in an input field |
+| Cmd+/ | Focus search box | |
+
+#### Detail Page Hotkeys (registered via useDetailPageNavigation from @trueblocks/scaffold)
+
+| Key | Action | Condition |
+|-----|--------|-----------|
+| Arrow Right | Next item | Not in an input field |
+| Arrow Left | Previous item | Not in an input field |
+| Home | First item | Not in an input field |
+| End | Last item | Not in an input field |
+| Cmd+Shift+Left | Return to list | |
+| Cmd+Shift+Up | Return to list (alias) | |
+
+#### Restaurant Detail Hotkeys
 
 | Key | Action |
 |-----|--------|
-| Cmd+1–8 | Navigate to view (or cycle list/detail if already there) |
-| Cmd+K | Global search modal |
-| Cmd+Shift+P | Command palette |
-| Cmd+R | Reload current view |
-| Cmd+/ | Focus DataTable search box |
-| Arrow Up/Down | Navigate table rows |
-| Arrow Left/Right (table) | Navigate pages |
-| Arrow Left/Right (detail) | Prev/next item |
-| Home/End | First/last row |
-| Enter | Open selected row |
-| Cmd+Shift+Left | Return to list from detail |
-| Option+Shift+2 | Cycle restaurant detail sub-tabs |
-| Cmd+Shift+D | Toggle show deleted items |
+| Option+Shift+2 | Cycle sub-tabs (Overview → Visits → Awards → … → Overview) |
+| Cmd+O | Open restaurant website in default browser |
+
+#### Recommend Page Hotkeys
+
+| Key | Action |
+|-----|--------|
+| Option+Shift+2 | Cycle sub-tabs (Tonight → Bucket List → Revisit → Explore → Tonight) |
+
+#### Implementation Notes
+
+- Hotkey combos use `mod` (Cmd on macOS, Ctrl on Windows/Linux) internally via Mantine's `useHotkeys`
+- Detail page navigation hotkeys suppress when focus is inside an `<input>`, `<textarea>`, or `[contenteditable]`
+- The "cycle list↔detail" behavior on Cmd+1–8 mirrors works exactly: pressing the hotkey for the current nav item toggles between list and detail views using `TabView`'s tab switching
+- `reloadCurrentView` is a CustomEvent dispatched on `window` — each page listens and re-fetches data
+- The platform convention: every navigable view has a Cmd+N hotkey. Every sub-tab group cycles with Option+Shift+N. Every detail page gets Arrow Left/Right/Home/End for free via `useDetailPageNavigation`
 
 ---
 

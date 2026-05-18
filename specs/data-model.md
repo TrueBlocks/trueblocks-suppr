@@ -118,7 +118,7 @@ Check, Please! Philly appearances. One row per restaurant-per-episode. ~120 rows
 
 ### Users
 
-Exactly 2 rows. No registration flow.
+Exactly 2 rows. No registration flow. The unit of the app is the couple — but each person has their own row so the system can track whose preferences are whose (essential for tit-for-tat, for "her 4 means great" calibration awareness, and for independent ratings of the same restaurant).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -143,6 +143,7 @@ Visit log. Grows over time through app usage.
 | userID | INTEGER | NOT NULL REFERENCES Users(userID) | Who logged this visit |
 | date | TEXT | NOT NULL | Visit date (YYYY-MM-DD) |
 | rating | INTEGER | | 1–5 stars |
+| would_go_back | INTEGER | | Boolean (1/0): "Would we go back?" — captures intent distinct from rating |
 | occasion | TEXT | | date-night, casual, celebration, business, etc. |
 | spend | REAL | | Total spend in dollars |
 | notes | TEXT | | Free-text notes about the visit |
@@ -233,6 +234,23 @@ Shared configuration for the recommendation engine. One row.
 | last_picker | INTEGER | REFERENCES Users(userID) | Who picked last (for tit-for-tat) |
 | modified_at | TEXT | DEFAULT (datetime('now')) | |
 | confirmed_by | TEXT | DEFAULT '[]' | JSON array of userIDs who confirmed pending |
+
+### RecommendOverrides
+
+Tracks when users ignore a recommendation and what they chose instead. Over time, these overrides teach the engine about preferences that the scoring formula doesn't capture.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| overrideID | INTEGER | PRIMARY KEY | |
+| userID | INTEGER | NOT NULL REFERENCES Users(userID) | Who overrode |
+| recommended_id | INTEGER | NOT NULL REFERENCES Restaurants(restaurantID) | What the engine suggested (#1) |
+| chosen_id | INTEGER | NOT NULL REFERENCES Restaurants(restaurantID) | What they actually chose |
+| reason | TEXT | | Why they overrode (optional free text) |
+| mode | TEXT | NOT NULL | Which mode was active (tonight, bucket-list, revisit, explore) |
+| filters | TEXT | DEFAULT '{}' | JSON: what filters were applied |
+| created_at | TEXT | DEFAULT (datetime('now')) | |
+
+The recommendation engine can query overrides to detect persistent biases: "they always pick BYOB over non-BYOB" or "they always pick Rittenhouse over other neighborhoods" — and adjust future scoring accordingly. This is Phase 5+ functionality: the table exists from the start but the learning logic is added later.
 
 ---
 

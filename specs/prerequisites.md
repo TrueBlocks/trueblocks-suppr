@@ -60,6 +60,26 @@ Every dependency below serves one principle: sovereignty. Your data stays on you
 - Used for the REST API layer
 - https://github.com/go-chi/chi
 
+### @trueblocks/ui (platform library)
+- Shared UI component library used across all apps in the platform (works, poetry, siteman, acrylic, suppr)
+- Provides: `AppLayout` (full app shell with resizable sidebar), `DataTable` (full-featured table with sort/filter/pagination/persistence), `DetailHeader` (prev/next navigation), `EditableField` (click-to-edit), `TabView` (tabbed content), `DashboardCard`, `ConfirmDeleteModal`, `KeyboardHints`, theming system, logging utilities
+- Imported via Vite alias: `@trueblocks/ui` → `../../packages/ui/src`
+- **Not a published npm package** — resolved via source path at build time
+- Peer dependencies: `@mantine/core ^8`, `@mantine/hooks ^8`, `@mantine/notifications ^8`, `@tabler/icons-react ^3`, `react ^18`
+
+### @trueblocks/scaffold (platform library)
+- Shared navigation and data-fetching patterns used across all apps
+- Provides: `NavigationProvider` + `useNavigation` (prev/next/stack navigation), `useDetailPageNavigation` (detail page hotkeys), `makeEntityHooks` (factory for useList/useOne from an entity API), `useAsync` (generic async data hook), `ReportShell` (report page chrome)
+- Imported via Vite alias: `@trueblocks/scaffold` → `../../packages/scaffold/src`
+- **Not a published npm package** — resolved via source path at build time
+- Peer dependencies: all of `@trueblocks/ui`'s peers plus `react-router-dom ^7`
+
+### Tabler Icons
+- Icon library used across the platform
+- Sidebar navigation items, action buttons, status indicators
+- `@tabler/icons-react ^3`
+- https://tabler.io/icons
+
 ### Make
 - Build orchestration — all commands run via Makefile targets
 - `make build`, `make dev`, `make test`, `make lint`

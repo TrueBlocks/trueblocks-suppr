@@ -128,6 +128,24 @@ POST   /api/peers/:id/share      → share something with them
 
 Pairing works like Bluetooth: one side generates a token (or QR code), the other enters it. Both sides now have each other's endpoint and a shared key. No central directory, no account creation, no platform.
 
+### Domain-Specific Trust
+
+Trust is not binary — it's per-cuisine. You might trust Jen on seafood and Thai but not on Korean. The system tracks hit rate: if Jen recommended 5 Thai places and you loved 4 of them, her Thai signal is strong. If she recommended 3 Korean places and you were meh on all of them, her Korean signal is weak.
+
+Stored in the Peers table as a JSON `trust_domains` field:
+
+```json
+{
+  "thai": { "recommended": 5, "liked": 4, "weight": 0.8 },
+  "korean": { "recommended": 3, "liked": 0, "weight": 0.0 },
+  "seafood": { "recommended": 2, "liked": 2, "weight": 1.0 }
+}
+```
+
+The `friend_signal` scoring component uses this weight: `friend_signal = base_friend_weight × domain_trust_weight`. A cuisine with no history gets the default weight (0.5 — cautious trust). Hit rate updates automatically after each visit to a friend-recommended restaurant.
+
+Trust is one hop. No transitive trust. Jen can't propagate Maria's opinion through her node — she can only manually forward it as her own recommendation (at which point it's weighted by YOUR trust of Jen, not of Maria).
+
 ---
 
 ## Sync Protocol
@@ -158,6 +176,7 @@ CREATE TABLE Peers (
     endpoint     TEXT NOT NULL,
     shared_key   TEXT NOT NULL,
     status       TEXT DEFAULT 'active',
+    trust_domains TEXT DEFAULT '{}',
     created_at   TEXT DEFAULT (datetime('now'))
 );
 
