@@ -24,9 +24,7 @@ First person, conversational, opinionated. Technical details included but explai
 
 ## Article 1: "The Problem with Yelp (and Every Restaurant App)"
 
-**Status**: Not started
-**Target length**: 1500–2000 words
-**Phase**: Can write now — no implementation needed
+**Status**: Draft complete
 
 ### Core Argument
 
