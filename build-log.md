@@ -55,3 +55,25 @@ This is the working relationship that makes the "book as product" model viable. 
 ## May 18, 2026 — Process Reflection Paragraphs (Idea)
 
 In the final version: consider adding a few paragraphs at the end of each chapter discussing my mental state during the process. What did the AI suggest? What ideas did I add? What was inspired by something the AI said? A kind of meta-commentary on the collaboration itself — making the co-authorship visible rather than hiding it behind the prose.
+
+## May 18, 2026 — What This Book Actually Is (Back Cover / Introduction Note)
+
+We need to describe exactly what we're doing — on the back cover, in the introduction, or both. This is a new kind of book and a new kind of software paradigm. It's 100% local-first and written for both the human and the AI in equal measure.
+
+The human reads the narrative section and understands exactly what we're trying to build and why. The AI also reads this section and understands the exact same thing. The AI then goes on to read the specification. From there, it builds that piece of software on the end user's machine.
+
+A human buys an enjoyable, informative, entertaining, and enlightening book. The AI builds software. The human gets to use the software without any of the downsides of the current End Stage Capitalism Surveillance nightmare we all live in — while still being able to enjoy all the intense joy brought by social media.
+
+This needs to be crystal clear to the buyer before purchase: you are buying a book that is simultaneously a story and a seed. Read it for pleasure. Feed it to your AI for sovereignty.
+
+## May 18, 2026 — The Narrative-Spec Ping-Pong
+
+The relationship between narrative and spec is not linear (write story → extract spec). It's a ping-pong game. The narrative reveals features the spec didn't anticipate. The spec constrains ideas the narrative invented on a whim. They correct each other continuously.
+
+Example: The image of sitting in a restaurant with the phone face-up on the table, showing the suppr logo so other couples notice it — that's a visual from the narrative (Essay 13, "The App on the Table") that implies features: voluntary presence broadcasting, a visually distinctive logo/screen, a social-object mode distinct from the utility mode. None of that was in the original spec. It came from imagining a scene and asking "what would the app need to do for this moment to happen?"
+
+Rule: where narrative and spec disagree, we correct the narrative. There should be no disagreements. The spec is authoritative for the builder, but the narrative is the source of vision. Both must converge.
+
+## May 18, 2026 — Easter Egg: Tits and Tats
+
+Somewhere in the narrative section — probably in the essay about tit-for-tat alternation — bury a line that makes "the tits and the tats" read as a natural reference to the two sides of the alternation. Don't flag it. Don't wink. Let it sit there for the author's private amusement. If nobody catches it, that's fine. Hidden jokes are a gift to yourself.
