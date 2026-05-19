@@ -6,9 +6,9 @@ This chapter specifies the exact tools, languages, and frameworks required to bu
 
 ## Philosophy: Get Out of the Browser
 
-suppr is a desktop application. It runs on your machine. It is not a web app hosted somewhere. The browser is someone else's house — Wails lets you build your own.
+	suppr is a desktop application. It runs on your machine. It is not a web app hosted somewhere. The browser is someone else's house — Wails lets you build your own.
 
-Every dependency below serves one principle: sovereignty. Your data stays on your hardware. Your app runs without an internet connection. Your tools are open source with no vendor lock-in.
+	Every dependency below serves one principle: sovereignty. Your data stays on your hardware. Your app runs without an internet connection. Your tools are open source with no vendor lock-in.
 
 ---
 
@@ -84,6 +84,12 @@ Every dependency below serves one principle: sovereignty. Your data stays on you
 - Build orchestration — all commands run via Makefile targets
 - `make build`, `make dev`, `make test`, `make lint`
 
+### Mermaid CLI (mmdc)
+- Renders Mermaid diagram blocks in markdown to PNG images during docx generation
+- Used by `md2docx` — fenced code blocks tagged with `mermaid` are rendered as embedded images
+- Install via `brew install mermaid-cli` or `npm install -g @mermaid-js/mermaid-cli`
+- https://github.com/mermaid-js/mermaid-cli
+
 ### Git
 - Version control
 - Repository hosts on GitHub (for collaboration and issue tracking)
@@ -92,7 +98,7 @@ Every dependency below serves one principle: sovereignty. Your data stays on you
 
 ## Deployment Dependencies (Phase 2+)
 
-These are needed only when running the server component (before the desktop-becomes-the-server migration):
+	These are needed only when running the server component (before the desktop-becomes-the-server migration):
 
 ### Caddy
 - Reverse proxy with automatic HTTPS
@@ -131,22 +137,22 @@ These are needed only when running the server component (before the desktop-beco
 - Electron
 - Next.js, Vite, or any SSR framework
 
-The absence of these is intentional. Every tool not listed here is a dependency you don't have — a thing that can't break, can't be deprecated, can't raise its prices.
+	The absence of these is intentional. Every tool not listed here is a dependency you don't have — a thing that can't break, can't be deprecated, can't raise its prices.
 
 ---
 
 ## Installation Verification
 
-After installing the required stack, verify with:
+	After installing the required stack, verify with:
 
-```
-go version          → go1.22+
-wails doctor        → all checks pass
-node --version      → v20+
-yarn --version      → latest stable
-sqlite3 --version   → 3.35+ (WAL support)
-make --version      → GNU Make 3.81+
-git --version       → any recent version
-```
+	```
+	go version          → go1.22+
+	wails doctor        → all checks pass
+	node --version      → v20+
+	yarn --version      → latest stable
+	sqlite3 --version   → 3.35+ (WAL support)
+	make --version      → GNU Make 3.81+
+	git --version       → any recent version
+	```
 
-If `wails doctor` passes, you're ready to build.
+	If `wails doctor` passes, you're ready to build.

@@ -17,12 +17,12 @@ This chapter specifies every table, column, relationship, and constraint in the 
 
 ## Attributes Pattern
 
-Restaurants use a hybrid approach for boolean/flag-like properties:
+	Restaurants use a hybrid approach for boolean/flag-like properties:
 
 - **Explicit columns** for fields that are filtered on, sorted by, or used in the recommendation engine: `status`, `price_range`, `byob`, `outdoor`, `reservations`
 - **`attributes` TEXT column** (JSON array) for extensible flags that don't need structured queries: `["cash-only", "dog-friendly", "good-for-groups", "live-music"]`
 
-This gives type-safe filtering on core fields while allowing indefinite extensibility without schema migrations.
+	This gives type-safe filtering on core fields while allowing indefinite extensibility without schema migrations.
 
 ---
 
@@ -30,7 +30,7 @@ This gives type-safe filtering on core fields while allowing indefinite extensib
 
 ### Restaurants
 
-The core table. One row per restaurant.
+	The core table. One row per restaurant.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -61,7 +61,7 @@ The core table. One row per restaurant.
 
 ### AwardSources
 
-Award-granting organizations. 4 rows.
+	Award-granting organizations. 4 rows.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -70,11 +70,11 @@ Award-granting organizations. 4 rows.
 | description | TEXT | | What this source is |
 | url | TEXT | | Source website |
 
-Rows: Philly Mag, Michelin, James Beard, Check Please.
+	Rows: Philly Mag, Michelin, James Beard, Check Please.
 
 ### AwardSourceUrls
 
-Provenance: where each year's list was captured from. 9 rows.
+	Provenance: where each year's list was captured from. 9 rows.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -86,7 +86,7 @@ Provenance: where each year's list was captured from. 9 rows.
 
 ### Awards
 
-Restaurant ↔ award source ↔ year. ~455 rows.
+	Restaurant ↔ award source ↔ year. ~455 rows.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -101,7 +101,7 @@ Restaurant ↔ award source ↔ year. ~455 rows.
 
 ### Episodes
 
-Check, Please! Philly appearances. One row per restaurant-per-episode. ~120 rows.
+	Check, Please! Philly appearances. One row per restaurant-per-episode. ~120 rows.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -118,7 +118,7 @@ Check, Please! Philly appearances. One row per restaurant-per-episode. ~120 rows
 
 ### Users
 
-Exactly 2 rows. No registration flow. The unit of the app is the couple — but each person has their own row so the system can track whose preferences are whose (essential for tit-for-tat, for "her 4 means great" calibration awareness, and for independent ratings of the same restaurant).
+	Exactly 2 rows. No registration flow. The unit of the app is the couple — but each person has their own row so the system can track whose preferences are whose (essential for tit-for-tat, for "her 4 means great" calibration awareness, and for independent ratings of the same restaurant).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -134,7 +134,7 @@ Exactly 2 rows. No registration flow. The unit of the app is the couple — but 
 
 ### Visits
 
-Visit log. Grows over time through app usage.
+	Visit log. Grows over time through app usage.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -152,7 +152,7 @@ Visit log. Grows over time through app usage.
 
 ### Photos
 
-Photo metadata. Files stored on filesystem.
+	Photo metadata. Files stored on filesystem.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -167,7 +167,7 @@ Photo metadata. Files stored on filesystem.
 
 ### Tags
 
-Flexible tagging for restaurants.
+	Flexible tagging for restaurants.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -176,11 +176,11 @@ Flexible tagging for restaurants.
 | tag | TEXT | NOT NULL | Tag value (e.g., "date-night", "byob-gem") |
 | created_at | TEXT | DEFAULT (datetime('now')) | |
 
-UNIQUE constraint on (restaurantID, tag) — no duplicate tags.
+	UNIQUE constraint on (restaurantID, tag) — no duplicate tags.
 
 ### Intel
 
-News, tips, closings, openings. A living feed.
+	News, tips, closings, openings. A living feed.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -196,7 +196,7 @@ News, tips, closings, openings. A living feed.
 
 ### Lists
 
-Named custom lists (Date Night, BYOB Favorites, etc.).
+	Named custom lists (Date Night, BYOB Favorites, etc.).
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -209,7 +209,7 @@ Named custom lists (Date Night, BYOB Favorites, etc.).
 
 ### ListItems
 
-List membership: list ↔ restaurant.
+	List membership: list ↔ restaurant.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -220,11 +220,11 @@ List membership: list ↔ restaurant.
 | notes | TEXT | | Why it's on this list |
 | created_at | TEXT | DEFAULT (datetime('now')) | |
 
-UNIQUE constraint on (listID, restaurantID) — no duplicates.
+	UNIQUE constraint on (listID, restaurantID) — no duplicates.
 
 ### RecommendConfig
 
-Shared configuration for the recommendation engine. One row.
+	Shared configuration for the recommendation engine. One row.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -237,7 +237,7 @@ Shared configuration for the recommendation engine. One row.
 
 ### RecommendOverrides
 
-Tracks when users ignore a recommendation and what they chose instead. Over time, these overrides teach the engine about preferences that the scoring formula doesn't capture.
+	Tracks when users ignore a recommendation and what they chose instead. Over time, these overrides teach the engine about preferences that the scoring formula doesn't capture.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -250,55 +250,53 @@ Tracks when users ignore a recommendation and what they chose instead. Over time
 | filters | TEXT | DEFAULT '{}' | JSON: what filters were applied |
 | created_at | TEXT | DEFAULT (datetime('now')) | |
 
-The recommendation engine can query overrides to detect persistent biases: "they always pick BYOB over non-BYOB" or "they always pick Rittenhouse over other neighborhoods" — and adjust future scoring accordingly. This is Phase 5+ functionality: the table exists from the start but the learning logic is added later.
+	The recommendation engine can query overrides to detect persistent biases: "they always pick BYOB over non-BYOB" or "they always pick Rittenhouse over other neighborhoods" — and adjust future scoring accordingly. This is Phase 5+ functionality: the table exists from the start but the learning logic is added later.
 
 ---
 
 ## Full-Text Search
 
-An FTS5 virtual table for fast text search across restaurants and intel:
+	An FTS5 virtual table for fast text search across restaurants and intel:
 
-```sql
-CREATE VIRTUAL TABLE RestaurantSearch USING fts5(
-    name,
-    cuisine,
-    neighborhood,
-    notes,
-    content='Restaurants',
-    content_rowid='restaurantID'
-);
-```
+	```sql
+	CREATE VIRTUAL TABLE RestaurantSearch USING fts5(
+	    name,
+	    cuisine,
+	    neighborhood,
+	    notes,
+	    content='Restaurants',
+	    content_rowid='restaurantID'
+	);
+	```
 
-Kept in sync via triggers on INSERT/UPDATE/DELETE of the Restaurants table. The `/api/restaurants/search?q=` endpoint queries this table.
+	Kept in sync via triggers on INSERT/UPDATE/DELETE of the Restaurants table. The `/api/restaurants/search?q=` endpoint queries this table.
 
 ---
 
 ## Relationships
 
-```
-Restaurants ─┬─< Awards (via restaurantID)
-             ├─< Episodes (via restaurantID)
-             ├─< Visits (via restaurantID)
-             ├─< Photos (via restaurantID)
-             ├─< Tags (via restaurantID)
-             ├─< Intel (via restaurantID)
-             └─< ListItems (via restaurantID)
-
-Users ─┬─< Visits (via userID)
-       ├─< Photos (via userID)
-       └─< Lists (via userID)
-
-Lists ─< ListItems (via listID, CASCADE)
-
-AwardSources ─┬─< Awards (via sourceID)
-              └─< AwardSourceUrls (via sourceID)
+```mermaid
+erDiagram
+    Restaurants ||--o{ Awards : restaurantID
+    Restaurants ||--o{ Episodes : restaurantID
+    Restaurants ||--o{ Visits : restaurantID
+    Restaurants ||--o{ Photos : restaurantID
+    Restaurants ||--o{ Tags : restaurantID
+    Restaurants ||--o{ Intel : restaurantID
+    Restaurants ||--o{ ListItems : restaurantID
+    Users ||--o{ Visits : userID
+    Users ||--o{ Photos : userID
+    Users ||--o{ Lists : userID
+    Lists ||--o{ ListItems : listID
+    AwardSources ||--o{ Awards : sourceID
+    AwardSources ||--o{ AwardSourceUrls : sourceID
 ```
 
 ---
 
 ## Initial Data
 
-On first run, the import tool seeds the database from the archived CheckPlease database:
+	On first run, the import tool seeds the database from the archived CheckPlease database:
 
 - 276 restaurants (many fields NULL, filled during enrichment)
 - 4 award sources
@@ -307,13 +305,13 @@ On first run, the import tool seeds the database from the archived CheckPlease d
 - 120 episode appearances (Check Please! Philly, 6 seasons)
 - 2 user records with API keys
 
-All other tables start empty and are populated through app usage.
+	All other tables start empty and are populated through app usage.
 
 ---
 
 ## Enrichment (Post-Import)
 
-Data gaps are filled after initial import:
+	Data gaps are filled after initial import:
 
 | Gap | Approach | Priority |
 |-----|----------|----------|
@@ -325,7 +323,7 @@ Data gaps are filled after initial import:
 | Phone numbers | From Google Places results | Low |
 | Episode air dates | Research | Low |
 
-Enrichment tools live in `cmd/suppr-geocode/` and are run once per batch.
+	Enrichment tools live in `cmd/suppr-geocode/` and are run once per batch.
 
 ---
 

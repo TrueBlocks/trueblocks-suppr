@@ -2,7 +2,7 @@
 
 This chapter specifies every HTTP endpoint the suppr server exposes. An AI implementing suppr should generate handlers for each endpoint listed below, with the error handling semantics described in the Error Response section.
 
-Both the Wails desktop app and the phone PWA call these endpoints identically — the only difference is the transport layer (see Client-Server Pattern chapter).
+	Both the Wails desktop app and the phone PWA call these endpoints identically — the only difference is the transport layer (see Client-Server Pattern chapter).
 
 ---
 
@@ -18,28 +18,28 @@ Both the Wails desktop app and the phone PWA call these endpoints identically �
 
 ### Why PATCH (not PUT)
 
-PATCH sends only changed fields. This maps perfectly to the Wails app's `EditableField` pattern — one field changes, one field gets sent. For a 2-user app with simple field assignments, the theoretical downsides of PATCH (distinguishing "omitted" from "set to empty", no idempotency guarantee) don't apply. The Go handler uses `map[string]any` to build dynamic UPDATE statements from the fields present in the request body.
+	PATCH sends only changed fields. This maps perfectly to the Wails app's `EditableField` pattern — one field changes, one field gets sent. For a 2-user app with simple field assignments, the theoretical downsides of PATCH (distinguishing "omitted" from "set to empty", no idempotency guarantee) don't apply. The Go handler uses `map[string]any` to build dynamic UPDATE statements from the fields present in the request body.
 
 ---
 
 ## Error Handling (First-Class Citizen)
 
-Error handling is not tacked on after the happy path works. Every endpoint returns structured errors with enough context for the client to decide how to surface them to the user.
+	Error handling is not tacked on after the happy path works. Every endpoint returns structured errors with enough context for the client to decide how to surface them to the user.
 
 ### Error Response Shape
 
-All errors return this structure:
+	All errors return this structure:
 
-```json
-{
-  "error": {
-    "code": "RESTAURANT_NOT_FOUND",
-    "message": "Restaurant with ID 42 does not exist",
-    "severity": "user",
-    "field": "restaurantID"
-  }
-}
-```
+	```json
+	{
+	  "error": {
+	    "code": "RESTAURANT_NOT_FOUND",
+	    "message": "Restaurant with ID 42 does not exist",
+	    "severity": "user",
+	    "field": "restaurantID"
+	  }
+	}
+	```
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -50,7 +50,7 @@ All errors return this structure:
 
 ### Error Severities
 
-Severity determines how the client surfaces the error:
+	Severity determines how the client surfaces the error:
 
 | Severity | Meaning | Client Routing |
 |----------|---------|----------------|
@@ -60,41 +60,41 @@ Severity determines how the client surfaces the error:
 
 ### Error Codes by Category
 
-**Validation errors** (severity: `user`, HTTP 400):
+	**Validation errors** (severity: `user`, HTTP 400):
 - `MISSING_REQUIRED_FIELD` — a required field was not provided
 - `INVALID_FIELD_VALUE` — field value is wrong type or out of range
 - `DUPLICATE_ENTRY` — attempting to create something that already exists
 
-**Not found errors** (severity: `user`, HTTP 404):
+	**Not found errors** (severity: `user`, HTTP 404):
 - `RESTAURANT_NOT_FOUND`
 - `VISIT_NOT_FOUND`
 - `LIST_NOT_FOUND`
 - `PHOTO_NOT_FOUND`
 - `{RESOURCE}_NOT_FOUND` — pattern for all resources
 
-**Auth errors** (severity: `user`, HTTP 401/403):
+	**Auth errors** (severity: `user`, HTTP 401/403):
 - `UNAUTHORIZED` — no API key or invalid key
 - `FORBIDDEN` — valid key but not allowed for this operation
 
-**Conflict errors** (severity: `warning`, HTTP 409):
+	**Conflict errors** (severity: `warning`, HTTP 409):
 - `CONCURRENT_MODIFICATION` — resource changed since you last read it
 - `RESTAURANT_ALREADY_IN_LIST` — duplicate list membership
 
-**Server errors** (severity: `system`, HTTP 500):
+	**Server errors** (severity: `system`, HTTP 500):
 - `DATABASE_ERROR` — SQLite failure
 - `FILESYSTEM_ERROR` — photo storage failure
 - `INTERNAL_ERROR` — unexpected panic or logic error
 
 ### Client Responsibility
 
-The client MUST:
-1. Check HTTP status code first (2xx = success, anything else = parse error body)
-2. Read `severity` to decide routing (toast / status bar / log)
-3. Read `code` for programmatic handling (retry logic, field highlighting)
-4. Display `message` to the user when severity is `user`
-5. Log the full error response to the log file regardless of severity
+	The client MUST:
+	1. Check HTTP status code first (2xx = success, anything else = parse error body)
+	2. Read `severity` to decide routing (toast / status bar / log)
+	3. Read `code` for programmatic handling (retry logic, field highlighting)
+	4. Display `message` to the user when severity is `user`
+	5. Log the full error response to the log file regardless of severity
 
-The user should **never** see a silent failure. Every error reaches a surface — the question is which surface.
+	The user should **never** see a silent failure. Every error reaches a surface — the question is which surface.
 
 ---
 
@@ -224,96 +224,96 @@ The user should **never** see a silent failure. Every error reaches a surface �
 
 ## Response Shape Examples
 
-These are illustrative — the definitive field list comes from the Data Model chapter. But they show the shape an AI should produce.
+	These are illustrative — the definitive field list comes from the Data Model chapter. But they show the shape an AI should produce.
 
 ### GET /api/restaurants/:id
 
-```json
-{
-  "restaurantID": 42,
-  "name": "Zahav",
-  "cuisine": "Israeli",
-  "neighborhood": "Society Hill",
-  "city": "Philadelphia",
-  "state": "PA",
-  "address": "237 St James Pl",
-  "zip": "19106",
-  "phone": "215-625-8800",
-  "website": "https://zahavrestaurant.com",
-  "price_range": 4,
-  "byob": false,
-  "outdoor": true,
-  "reservations": true,
-  "status": "active",
-  "lat": 39.9469,
-  "lng": -75.1467,
-  "notes": "Lamb shoulder needs 2-person minimum",
-  "created_at": "2026-01-15T10:30:00Z",
-  "modified_at": "2026-05-10T14:22:00Z",
-  "computed": {
-    "avg_rating": 4.8,
-    "visit_count": 3,
-    "award_count": 2,
-    "last_visited": "2026-04-20"
-  }
-}
-```
+	```json
+	{
+	  "restaurantID": 42,
+	  "name": "Zahav",
+	  "cuisine": "Israeli",
+	  "neighborhood": "Society Hill",
+	  "city": "Philadelphia",
+	  "state": "PA",
+	  "address": "237 St James Pl",
+	  "zip": "19106",
+	  "phone": "215-625-8800",
+	  "website": "https://zahavrestaurant.com",
+	  "price_range": 4,
+	  "byob": false,
+	  "outdoor": true,
+	  "reservations": true,
+	  "status": "active",
+	  "lat": 39.9469,
+	  "lng": -75.1467,
+	  "notes": "Lamb shoulder needs 2-person minimum",
+	  "created_at": "2026-01-15T10:30:00Z",
+	  "modified_at": "2026-05-10T14:22:00Z",
+	  "computed": {
+	    "avg_rating": 4.8,
+	    "visit_count": 3,
+	    "award_count": 2,
+	    "last_visited": "2026-04-20"
+	  }
+	}
+	```
 
 ### GET /api/recommend/tonight
 
-```json
-{
-  "recommendations": [
-    {
-      "restaurant": { "restaurantID": 42, "name": "Zahav", "cuisine": "Israeli", "neighborhood": "Society Hill", "price_range": 4 },
-      "score": 87.5,
-      "factors": {
-        "recency_bonus": 0,
-        "rating_signal": 24.0,
-        "award_signal": 20.0,
-        "variety_bonus": 15.0,
-        "occasion_match": 18.5,
-        "distance_penalty": -5.0,
-        "freshness_decay": -5.0
-      },
-      "reason": "Highly rated, award-winning, haven't been in 3 months"
-    }
-  ],
-  "params_used": {
-    "occasion": "date-night",
-    "cuisine": null,
-    "price_max": null,
-    "byob_only": false
-  }
-}
-```
+	```json
+	{
+	  "recommendations": [
+	    {
+	      "restaurant": { "restaurantID": 42, "name": "Zahav", "cuisine": "Israeli", "neighborhood": "Society Hill", "price_range": 4 },
+	      "score": 87.5,
+	      "factors": {
+	        "recency_bonus": 0,
+	        "rating_signal": 24.0,
+	        "award_signal": 20.0,
+	        "variety_bonus": 15.0,
+	        "occasion_match": 18.5,
+	        "distance_penalty": -5.0,
+	        "freshness_decay": -5.0
+	      },
+	      "reason": "Highly rated, award-winning, haven't been in 3 months"
+	    }
+	  ],
+	  "params_used": {
+	    "occasion": "date-night",
+	    "cuisine": null,
+	    "price_max": null,
+	    "byob_only": false
+	  }
+	}
+	```
 
 ### GET /api/visits/recent
 
-```json
-{
-  "visits": [
-    {
-      "visitID": 88,
-      "restaurantID": 42,
-      "restaurant_name": "Zahav",
-      "user": "Jay",
-      "date": "2026-04-20",
-      "rating": 5,
-      "occasion": "date-night",
-      "spend": 185,
-      "notes": "Lamb shoulder was perfect. New wine list is excellent.",
-      "created_at": "2026-04-20T22:15:00Z"
-    }
-  ]
-}
-```
+	```json
+	{
+	  "visits": [
+	    {
+	      "visitID": 88,
+	      "restaurantID": 42,
+	      "restaurant_name": "Zahav",
+	      "user": "Jay",
+	      "date": "2026-04-20",
+	      "rating": 5,
+	      "occasion": "date-night",
+	      "spend": 185,
+	      "notes": "Lamb shoulder was perfect. New wine list is excellent.",
+	      "created_at": "2026-04-20T22:15:00Z"
+	    }
+	  ]
+	}
+	```
 
 ---
 
 ## Photo Storage
 
-Photos are stored as files on DO at `/data/suppr/photos/{restaurantID}/{filename}`. The API handles:
+	Photos are stored as files on DO at `/data/suppr/photos/{restaurantID}/{filename}`. The API handles:
 - **Upload**: multipart POST → resize to max 2048px → store file → create Photos table row
 - **Download**: stream file from disk with appropriate Content-Type
 - **Delete**: remove file from disk + delete Photos table row
@@ -323,25 +323,25 @@ Photos are stored as files on DO at `/data/suppr/photos/{restaurantID}/{filename
 
 ## State Persistence (Not in the API)
 
-The Wails app's UI state (sidebar width, last route, table states, tab states) is **per-machine, not shared**. It uses the `appkit.Store` pattern — stored locally in `state.json`, not on the DO server. No API endpoints needed for state.
+	The Wails app's UI state (sidebar width, last route, table states, tab states) is **per-machine, not shared**. It uses the `appkit.Store` pattern — stored locally in `state.json`, not on the DO server. No API endpoints needed for state.
 
 ---
 
 ## PATCH Semantics Detail
 
-All updates use PATCH with partial payloads:
+	All updates use PATCH with partial payloads:
 
-```json
-PATCH /api/restaurants/42
-{ "cuisine": "Israeli/Middle Eastern", "price_range": 4 }
-```
+	```json
+	PATCH /api/restaurants/42
+	{ "cuisine": "Israeli/Middle Eastern", "price_range": 4 }
+	```
 
-The handler:
-1. Parses the body into `map[string]any`
-2. Validates each key against allowed fields
-3. Validates each value's type and constraints
-4. Builds a dynamic `UPDATE ... SET field1=?, field2=? WHERE id=?`
-5. Updates `modified_at` automatically
-6. Returns the full updated resource
+	The handler:
+	1. Parses the body into `map[string]any`
+	2. Validates each key against allowed fields
+	3. Validates each value's type and constraints
+	4. Builds a dynamic `UPDATE ... SET field1=?, field2=? WHERE id=?`
+	5. Updates `modified_at` automatically
+	6. Returns the full updated resource
 
-Unknown fields → `INVALID_FIELD_VALUE` error. Missing required fields on CREATE → `MISSING_REQUIRED_FIELD` error.
+	Unknown fields → `INVALID_FIELD_VALUE` error. Missing required fields on CREATE → `MISSING_REQUIRED_FIELD` error.

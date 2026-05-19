@@ -77,3 +77,33 @@ Rule: where narrative and spec disagree, we correct the narrative. There should 
 ## May 18, 2026 — Easter Egg: Tits and Tats
 
 Somewhere in the narrative section — probably in the essay about tit-for-tat alternation — bury a line that makes "the tits and the tats" read as a natural reference to the two sides of the alternation. Don't flag it. Don't wink. Let it sit there for the author's private amusement. If nobody catches it, that's fine. Hidden jokes are a gift to yourself.
+
+## May 18, 2026 — Hacking Is Back (Because the AI Can Pick Up Threads)
+
+I deliberately leave things underspecified, under-implemented, half-assed. I know I'm only going to use something the way I want it NOW. Either I'll never touch it again, or I'll come back later and the AI will pick up where I left off — fully grasping the context from the code, the comments, the conversation history.
+
+In the old days this would have been called hacking. Bad practice. Technical debt. Unprofessional. You don't ship code that's "good enough for today" because future-you has to maintain it, and future-you will hate past-you for every shortcut.
+
+That calculation changed completely. Future-me doesn't maintain code. Future-me describes what he wants and the AI refactors the hack into whatever it needs to be. The cost of a hack dropped to near zero because the cost of fixing a hack dropped to near zero. So I hack the shit out of everything. I literally do not care what the code looks like. How shitty it is. How bad it is. I never have to look at it. Does the command-line tool do what I want? Does the app do what I want? That's all that matters. And it's not even "does it do what I want forever" — it's "does it do what I want RIGHT NOW." Don't worry about the future. The AI will handle the future.
+
+This is hugely liberating. It changes what "quality" means. Quality used to mean: clean code, good abstractions, maintainable architecture, test coverage. Now quality means: does the thing work for the person using it today? Everything else is premature optimization against a future that might never arrive — and if it does arrive, it arrives with an AI that can rewrite anything in minutes.
+
+## May 18, 2026 — The Typeset Workflow (Bidirectional md↔docx)
+
+Invented a new alias: `typeset`. The AI generates .docx files from the markdown sources (specs + narrative essays) into `./works/imports/files/`. The works app picks them up, generates PDF previews, and they appear in the galley. The markdown is the source of truth. The .docx is a rendered view.
+
+But — and this is the key innovation — I can ALSO edit the .docx files directly (red-pen edits in Word, reading in the works app and marking things up). The system handles this: before overwriting a .docx, the AI checks file dates. If the .docx is newer than the .md, it means I edited the docx. The AI stops and asks: overwrite (discard my edits) or sync (extract my changes back into the markdown, then regenerate).
+
+This gives us true bidirectional editing without a sync protocol. The AI writes in markdown. I read and edit in Word. Changes flow in both directions through a simple date-comparison guard. No merge conflicts. No version numbers. Just file timestamps and a human deciding which direction to push.
+
+The insight: the book pipeline doesn't need a single format. It needs a single source of truth with a clean generation step in one direction and a clean sync step in the other. The `typeset` alias is that generation step. The `sync` response is the reverse step. Both are simple, both are reversible, both preserve the markdown as canonical.
+
+## May 18, 2026 — Markdown Is Not How AI Should Think
+
+The typeset workflow works, but it exposed something deeper: markdown is a terrible format for AI memory and collaboration. Getting the AI to produce .docx files from markdown — stripping banners, injecting subtitles, handling the colon convention for Title/Subtitle splitting — required multiple rounds of correction. The AI kept including "Part 5 of the Small Batch Apps series" banners because the markdown contained them. It couldn't distinguish structural metadata from content because markdown makes no such distinction. Everything is flat text with decoration characters.
+
+The real problem isn't this particular workflow. It's that markdown is the only viable way to get an AI to do structured work, and it's obviously inadequate. Markdown loses context. It loses relationships between documents. It loses the difference between "this is metadata about the document" and "this is content of the document." It loses formatting intent — is this italic for emphasis or italic because it's a series name? You can't tell. The AI can't tell either, so it guesses, and half the time it guesses wrong.
+
+What AI memory actually needs is a native format — something that preserves all context, all connections, all the subtlety that gets stripped when you flatten thought into `# headings` and `*emphasis*`. The human side needs WYSIWYG — text that looks exactly as it will appear on the physical page, whether that page is paper or screen. These are two completely different requirements served by two completely different formats, and the translation layer between them should be trivial and lossless.
+
+Right now we're forcing both sides through markdown, which serves neither side well. The human can't see final formatting. The AI can't see semantic relationships. We're in an awkward middle ground that will look as primitive as punch cards once someone builds the right native format. Markdown is JSON for prose: technically sufficient, existentially hostile, and inexplicably dominant despite being obviously wrong.

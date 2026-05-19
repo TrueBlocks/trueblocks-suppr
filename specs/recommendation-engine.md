@@ -6,7 +6,7 @@ This chapter specifies the recommendation engine — the scoring logic that answ
 
 ## The Four Modes
 
-Each mode is a distinct query/scoring strategy, not four variations of one algorithm.
+	Each mode is a distinct query/scoring strategy, not four variations of one algorithm.
 
 | Mode | Question It Answers | Returns |
 |------|--------------------|---------| 
@@ -19,7 +19,7 @@ Each mode is a distinct query/scoring strategy, not four variations of one algor
 
 ## Mode A: "Tonight" (The Main Event)
 
-User optionally provides: occasion, cuisine, price, byob, mood. The engine scores every eligible restaurant and returns a ranked list (configurable `result_count`, default 5). The UI emphasizes the #1 result as "the answer" — prominently displayed above the others. The ideal is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The remaining results are visible but secondary ("or if not that...").
+	User optionally provides: occasion, cuisine, price, byob, mood. The engine scores every eligible restaurant and returns a ranked list (configurable `result_count`, default 5). The UI emphasizes the #1 result as "the answer" — prominently displayed above the others. The ideal is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The remaining results are visible but secondary ("or if not that...").
 
 ### Eligibility Filter (eliminates before scoring)
 
@@ -31,16 +31,16 @@ User optionally provides: occasion, cuisine, price, byob, mood. The engine score
 
 ### Scoring Formula
 
-```
-score = quality_signal
-      + visit_affinity
-      - recency_penalty
-      + exploration_bonus
-      + occasion_match
-      + turn_bonus
-      + friend_signal
-      + jitter
-```
+	```
+	score = quality_signal
+	      + visit_affinity
+	      - recency_penalty
+	      + exploration_bonus
+	      + occasion_match
+	      + turn_bonus
+	      + friend_signal
+	      + jitter
+	```
 
 ### Scoring Components
 
@@ -56,11 +56,11 @@ score = quality_signal
 | **distance_penalty** | 0 to -10 | If home_lat/home_lng are configured: penalizes restaurants far from home. Within 2 miles = 0. 2–5 miles = -3. 5–10 miles = -7. Over 10 miles = -10. Configurable radius threshold. Disabled (0) if no home location set. |
 | **jitter** | -3 to +3 | Random per-request. Prevents identical results on repeated queries. |
 
-**Total range**: roughly -38 to +118. Returned sorted descending, count set by `result_count` (default 5).
+	**Total range**: roughly -38 to +118. Returned sorted descending, count set by `result_count` (default 5).
 
 ### One-Line Reason Generation
 
-Each result includes a human-readable reason. The engine picks the dominant scoring factor:
+	Each result includes a human-readable reason. The engine picks the dominant scoring factor:
 
 - "Award-winning, you haven't tried it yet" (high quality_signal + exploration_bonus)
 - "You loved it 4 months ago" (high visit_affinity + low recency_penalty)
@@ -73,77 +73,77 @@ Each result includes a human-readable reason. The engine picks the dominant scor
 
 ## Mode B: "Bucket List"
 
-No scoring formula needed. Pure SQL query:
+	No scoring formula needed. Pure SQL query:
 
-```sql
-SELECT r.*, COUNT(a.awardID) as award_count
-FROM Restaurants r
-JOIN Awards a ON a.restaurantID = r.restaurantID
-LEFT JOIN Visits v ON v.restaurantID = r.restaurantID
-WHERE v.visitID IS NULL
-  AND r.status = 'open'
-GROUP BY r.restaurantID
-ORDER BY award_count DESC, r.name ASC
-```
+	```sql
+	SELECT r.*, COUNT(a.awardID) as award_count
+	FROM Restaurants r
+	JOIN Awards a ON a.restaurantID = r.restaurantID
+	LEFT JOIN Visits v ON v.restaurantID = r.restaurantID
+	WHERE v.visitID IS NULL
+	  AND r.status = 'open'
+	GROUP BY r.restaurantID
+	ORDER BY award_count DESC, r.name ASC
+	```
 
-Returns all unvisited restaurants with at least one award, sorted by award count. Multi-year 50 Best appearances rank highest.
+	Returns all unvisited restaurants with at least one award, sorted by award count. Multi-year 50 Best appearances rank highest.
 
 ---
 
 ## Mode C: "Revisit"
 
-```sql
-SELECT r.*,
-       MAX(v.date) as last_visit,
-       AVG(v.rating) as avg_rating,
-       COUNT(v.visitID) as visit_count
-FROM Restaurants r
-JOIN Visits v ON v.restaurantID = r.restaurantID
-WHERE v.userID = ?
-  AND r.status = 'open'
-GROUP BY r.restaurantID
-HAVING avg_rating >= 4
-   AND MAX(v.date) < date('now', '-3 months')
-ORDER BY avg_rating DESC, last_visit ASC
-```
+	```sql
+	SELECT r.*,
+	       MAX(v.date) as last_visit,
+	       AVG(v.rating) as avg_rating,
+	       COUNT(v.visitID) as visit_count
+	FROM Restaurants r
+	JOIN Visits v ON v.restaurantID = r.restaurantID
+	WHERE v.userID = ?
+	  AND r.status = 'open'
+	GROUP BY r.restaurantID
+	HAVING avg_rating >= 4
+	   AND MAX(v.date) < date('now', '-3 months')
+	ORDER BY avg_rating DESC, last_visit ASC
+	```
 
-Restaurants rated 4+ stars on average but not visited in 3+ months. Sorted by rating (highest first), then by staleness (longest since last visit first).
+	Restaurants rated 4+ stars on average but not visited in 3+ months. Sorted by rating (highest first), then by staleness (longest since last visit first).
 
 ---
 
 ## Mode D: "Explore"
 
-The most interesting mode algorithmically. Finds cuisines or neighborhoods you rarely visit but that have strong quality signals.
+	The most interesting mode algorithmically. Finds cuisines or neighborhoods you rarely visit but that have strong quality signals.
 
 ### Algorithm
 
-**Step 1** — Count your visits by cuisine:
-```sql
-SELECT r.cuisine, COUNT(*) as visit_count
-FROM Visits v JOIN Restaurants r ON v.restaurantID = r.restaurantID
-WHERE v.userID = ?
-GROUP BY r.cuisine
-```
+	**Step 1** — Count your visits by cuisine:
+	```sql
+	SELECT r.cuisine, COUNT(*) as visit_count
+	FROM Visits v JOIN Restaurants r ON v.restaurantID = r.restaurantID
+	WHERE v.userID = ?
+	GROUP BY r.cuisine
+	```
 
-**Step 2** — Count award-winning restaurants by cuisine:
-```sql
-SELECT r.cuisine, COUNT(DISTINCT r.restaurantID) as awarded_count
-FROM Awards a JOIN Restaurants r ON a.restaurantID = r.restaurantID
-WHERE r.status = 'open'
-GROUP BY r.cuisine
-```
+	**Step 2** — Count award-winning restaurants by cuisine:
+	```sql
+	SELECT r.cuisine, COUNT(DISTINCT r.restaurantID) as awarded_count
+	FROM Awards a JOIN Restaurants r ON a.restaurantID = r.restaurantID
+	WHERE r.status = 'open'
+	GROUP BY r.cuisine
+	```
 
-**Step 3** — Find cuisines where `awarded_count` is high but `visit_count` is low (or zero). Score: `awarded_count / (visit_count + 1)`. High score = "lots of great places you haven't explored."
+	**Step 3** — Find cuisines where `awarded_count` is high but `visit_count` is low (or zero). Score: `awarded_count / (visit_count + 1)`. High score = "lots of great places you haven't explored."
 
-**Step 4** — From those underexplored cuisines, return the top award-winning restaurants you haven't visited.
+	**Step 4** — From those underexplored cuisines, return the top award-winning restaurants you haven't visited.
 
-Same logic applies to neighborhoods as a secondary dimension.
+	Same logic applies to neighborhoods as a secondary dimension.
 
 ---
 
 ## Preferences & Configuration
 
-The recommendation engine is configurable. Both users must agree on configuration changes — no unilateral algorithm tweaks. Preferences are stored in a `RecommendConfig` table (or as a JSON document in the existing config), shared between both users.
+	The recommendation engine is configurable. Both users must agree on configuration changes — no unilateral algorithm tweaks. Preferences are stored in a `RecommendConfig` table (or as a JSON document in the existing config), shared between both users.
 
 ### Configurable Parameters
 
@@ -163,7 +163,7 @@ The recommendation engine is configurable. Both users must agree on configuratio
 
 ### Tit-for-Tat Logic
 
-When enabled, the system tracks whose turn it is to pick:
+	When enabled, the system tracks whose turn it is to pick:
 - After a visit is logged, the *other* user gets "next pick" status
 - The user whose turn it is gets their ratings doubled in visit_affinity AND +10 to their tagged/favorited restaurants
 - The effect: "the list reorders itself around her preferences, not mine" — the picker's taste dominates the ranking
@@ -173,18 +173,18 @@ When enabled, the system tracks whose turn it is to pick:
 
 ### Mutual Consent
 
-Configuration changes require both users to confirm. The mechanism:
-1. One user proposes a change via the settings UI
-2. The other user sees a pending change notification
-3. Change takes effect only when both acknowledge
+	Configuration changes require both users to confirm. The mechanism:
+	1. One user proposes a change via the settings UI
+	2. The other user sees a pending change notification
+	3. Change takes effect only when both acknowledge
 
-For a 2-user app, this is simple: a `pending_config` field that becomes `active_config` when both users have seen it.
+	For a 2-user app, this is simple: a `pending_config` field that becomes `active_config` when both users have seen it.
 
 ---
 
 ## Cold Start Behavior
 
-With no visits logged yet, the engine degrades gracefully:
+	With no visits logged yet, the engine degrades gracefully:
 
 | Mode | Cold Start Behavior |
 |------|-------------------|
@@ -193,7 +193,7 @@ With no visits logged yet, the engine degrades gracefully:
 | **Revisit** | Returns empty (no visits to revisit) |
 | **Explore** | Returns the most-awarded cuisines overall |
 
-As visits are logged, recommendations become more personalized.
+	As visits are logged, recommendations become more personalized.
 
 ---
 

@@ -8,30 +8,29 @@ This chapter specifies the complete user interface for suppr — both the Wails 
 
 ### Header
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 🍽 suppr                               A Dining Companion   │
-└─────────────────────────────────────────────────────────────┘
-```
+	Title left, subtitle center, dark mode toggle right.
 
-Title left, subtitle center, dark mode toggle right.
+```mermaid
+graph LR
+    A["🍽 suppr"] ~~~ B["A Dining Companion"] ~~~ C["🌙"]
+```
 
 ### Sidebar Navigation
 
-Uses `AppLayout` from `@trueblocks/ui` — the same component used by works, poetry, and siteman. Collapsible, resizable sidebar with icon + label items.
+	Uses `AppLayout` from `@trueblocks/ui` — the same component used by works, poetry, and siteman. Collapsible, resizable sidebar with icon + label items.
 
-**Implementation:** Each nav item is a `NavItem` object passed to `AppLayout`:
+	**Implementation:** Each nav item is a `NavItem` object passed to `AppLayout`:
 
-```typescript
-interface NavItem {
-  id: string;
-  label: string;
-  icon: ElementType;  // Tabler icon component
-  badge?: number;     // optional count badge
-}
-```
+	```typescript
+	interface NavItem {
+	  id: string;
+	  label: string;
+	  icon: ElementType;  // Tabler icon component
+	  badge?: number;     // optional count badge
+	}
+	```
 
-**Nav items (top section):**
+	**Nav items (top section):**
 
 | # | id | label | icon | Has Tabs | Hotkey |
 |---|-----|-------|------|----------|--------|
@@ -42,14 +41,14 @@ interface NavItem {
 | 5 | `episodes` | Episodes | `IconDeviceTv` | List / Detail | Cmd+5 |
 | 6 | `intel` | Intel | `IconNews` | List / Detail | Cmd+6 |
 
-**Nav items (bottom section, below divider):**
+	**Nav items (bottom section, below divider):**
 
 | # | id | label | icon | Has Tabs | Hotkey |
 |---|-----|-------|------|----------|--------|
 | 7 | `recommend` | Recommend | `IconSparkles` | No (wizard-style) | Cmd+7 |
 | 8 | `settings` | Settings | `IconSettings` | Tabbed | Cmd+8 |
 
-**Sidebar behavior (from AppLayout):**
+	**Sidebar behavior (from AppLayout):**
 - Resizable via mouse drag (min: 56px icon-only, max: 300px, default: 220px)
 - Collapses to icon-only mode when dragged below 80px threshold
 - Width persisted via Go backend: `GetSidebarWidth()` / `SetSidebarWidth()`
@@ -62,32 +61,32 @@ interface NavItem {
 
 ### List/Detail Pattern (Platform Standard)
 
-Every entity page (Restaurants, Visits, Awards, Episodes, Intel) follows the same structural pattern from `@trueblocks/scaffold` and `@trueblocks/ui`:
+	Every entity page (Restaurants, Visits, Awards, Episodes, Intel) follows the same structural pattern from `@trueblocks/scaffold` and `@trueblocks/ui`:
 
-```
-XxxPage.tsx
-  └── NavigationProvider (from @trueblocks/scaffold)
-       └── TabView (from @trueblocks/ui — list | detail)
-            ├── XxxList.tsx (list tab)
-            │    └── DataTable (from @trueblocks/ui)
-            └── XxxDetail.tsx (detail tab)
-                 └── DetailHeader (from @trueblocks/ui)
-                      └── Sub-tabs (entity-specific)
-```
+	```
+	XxxPage.tsx
+	  └── NavigationProvider (from @trueblocks/scaffold)
+	       └── TabView (from @trueblocks/ui — list | detail)
+	            ├── XxxList.tsx (list tab)
+	            │    └── DataTable (from @trueblocks/ui)
+	            └── XxxDetail.tsx (detail tab)
+	                 └── DetailHeader (from @trueblocks/ui)
+	                      └── Sub-tabs (entity-specific)
+	```
 
-**NavigationProvider** manages the navigation stack:
+	**NavigationProvider** manages the navigation stack:
 - `setItems(entityType, items, currentId)` — set the list for prev/next
 - `setCurrentId(id)` — select an item
 - `push(entityType, items, currentId, parentId)` — navigate into a sub-context (e.g., Restaurant → Visit)
 - `pop()` — return to parent context
 - `hasPrev` / `hasNext` / `goNext` / `goPrev` / `goHome` / `goEnd` — for DetailHeader arrows
 
-**TabView** manages the list↔detail toggle:
+	**TabView** manages the list↔detail toggle:
 - Tab state persisted to Go backend via `GetTab(viewId)` / `SetTab(viewId, tab)`
 - Active tab determined by whether a URL param (`:id`) is present
 - `createPersistedTabContext` from `@trueblocks/ui` for app-wide tab state
 
-**DataTable** (list tab) provides:
+	**DataTable** (list tab) provides:
 - Multi-column sort (up to 4 levels)
 - Column filters (dropdown, range, grouped)
 - Global search with custom `searchFn`
@@ -97,22 +96,22 @@ XxxPage.tsx
 - Delete/undelete with `ConfirmDeleteModal`
 - Custom row styling via `getRowStyle`
 
-**DetailHeader** (detail tab) provides:
+	**DetailHeader** (detail tab) provides:
 - Back button (returns to list)
 - Prev/next arrows with position display ("12 of 276")
 - Title area with icon + subtitle
 - Action slots (left and right)
 - Delete/undelete/permanent-delete buttons
 
-**useDetailPageNavigation** (from `@trueblocks/scaffold`) wires Arrow Left/Right, Home/End, and Cmd+Shift+Left hotkeys automatically for any detail page.
+	**useDetailPageNavigation** (from `@trueblocks/scaffold`) wires Arrow Left/Right, Home/End, and Cmd+Shift+Left hotkeys automatically for any detail page.
 
-**Sub-tabs on Detail views** use a vertical or horizontal tab pattern. Each entity's sub-tabs are specified in its Detail section below.
+	**Sub-tabs on Detail views** use a vertical or horizontal tab pattern. Each entity's sub-tabs are specified in its Detail section below.
 
 ---
 
 ### Entity Sub-Tab Maps
 
-Complete sub-tab specifications for each entity's detail view:
+	Complete sub-tab specifications for each entity's detail view:
 
 #### Restaurant Detail Sub-Tabs
 
@@ -157,32 +156,19 @@ Complete sub-tab specifications for each entity's detail view:
 
 ### Dashboard
 
-At-a-glance stats and actionable items:
+	At-a-glance stats and actionable items:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│  │ 276      │ │ 42       │ │ 18       │ │ 5 ★      │      │
-│  │Restaurants│ │ Visited  │ │ Cuisines │ │ Avg Rating│      │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘      │
-│                                                             │
-│  RECENT VISITS                    INTEL ALERTS              │
-│  ┌─────────────────────────┐     ┌──────────────────┐      │
-│  │ Zahav — ★★★★★ — May 10 │     │ ⚠ Closure: Foo   │      │
-│  │ Vernick — ★★★★ — May 3 │     │ 🏆 New award: Bar │      │
-│  │ Talula's — ★★★★ — Apr  │     │ 📰 Menu change:..│      │
-│  └─────────────────────────┘     └──────────────────┘      │
-│                                                             │
-│  BUCKET LIST (Top 5 Unvisited)   YOUR PATTERNS             │
-│  ┌─────────────────────────┐     ┌──────────────────┐      │
-│  │ 1. Restaurant X — 5yr  │     │ Fav cuisine: Ital│      │
-│  │ 2. Restaurant Y — 4yr  │     │ Fav hood: Ritten │      │
-│  │ 3. Restaurant Z — 3yr  │     │ Avg $/visit: $$  │      │
-│  └─────────────────────────┘     └──────────────────┘      │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+block-beta
+    columns 4
+    A["276\nRestaurants"] B["42\nVisited"] C["18\nCuisines"] D["5 ★\nAvg Rating"]
+    E["RECENT VISITS\nZahav ★★★★★ May 10\nVernick ★★★★ May 3\nTalula's ★★★★ Apr"]:2
+    F["INTEL ALERTS\n⚠ Closure: Foo\n🏆 New award: Bar\n📰 Menu change"]:2
+    G["BUCKET LIST\n1. Restaurant X — 5yr\n2. Restaurant Y — 4yr\n3. Restaurant Z — 3yr"]:2
+    H["YOUR PATTERNS\nFav cuisine: Italian\nFav hood: Rittenhouse\nAvg $/visit: $$"]:2
 ```
 
-Dashboard sections:
+	Dashboard sections:
 - **Stat Cards** (top row): Total restaurants, total visited, distinct cuisines, average rating
 - **Recent Visits**: Last 3–5 visits with restaurant name, rating, date
 - **Intel Alerts**: Undismissed intel items (closures, new awards, menu changes)
@@ -193,7 +179,7 @@ Dashboard sections:
 
 ### Restaurants — List Tab
 
-DataTable with sorting, filtering, search, persisted state.
+	DataTable with sorting, filtering, search, persisted state.
 
 | Column | Width | Sortable | Filterable | Notes |
 |--------|-------|----------|------------|-------|
@@ -206,33 +192,41 @@ DataTable with sorting, filtering, search, persisted state.
 | BYOB | 5% | ✓ | ✓ dropdown | Yes/No |
 | Status | 8% | ✓ | ✓ dropdown | open/closed/seasonal |
 
-Click row → navigate to Restaurant Detail.
+	Click row → navigate to Restaurant Detail.
 
-Filter dropdowns loaded dynamically from the backend via `GetRestaurantFilterOptions()`.
+	Filter dropdowns loaded dynamically from the backend via `GetRestaurantFilterOptions()`.
 
 ---
 
 ### Restaurants — Detail Tab
 
-Detail view with vertical sub-tabs:
+	Detail view with vertical sub-tabs:
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│ ◀ ▶  Zahav                                    12 of 276     │
-│      Mediterranean · Rittenhouse · $$$$ · BYOB: No          │
-├──────────┬───────────────────────────────────────────────────┤
-│ Overview │  [fields, tags, notes, map link]                  │
-│ Visits   │                                                   │
-│ Awards   │                                                   │
-│ Episodes │                                                   │
-│ Photos   │                                                   │
-│ Intel    │                                                   │
-│ Lists    │                                                   │
-│ Preview  │                                                   │
-└──────────┴───────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Header["◀ ▶ Zahav — 12 of 276"]
+        H1["Mediterranean · Rittenhouse · $$$$ · BYOB: No"]
+    end
+    subgraph Layout
+        direction LR
+        subgraph Tabs[" "]
+            T1["Overview"]
+            T2["Visits"]
+            T3["Awards"]
+            T4["Episodes"]
+            T5["Photos"]
+            T6["Intel"]
+            T7["Lists"]
+            T8["Preview"]
+        end
+        subgraph Content["Content Area"]
+            C1["fields, tags, notes, map link"]
+        end
+    end
+    Header --> Layout
 ```
 
-**Sub-tabs:**
+	**Sub-tabs:**
 
 | Sub-Tab | Content |
 |---------|---------|
@@ -245,7 +239,7 @@ Detail view with vertical sub-tabs:
 | **Lists** | Which lists contain this restaurant. Add/remove buttons. |
 | **Preview** | Cached website preview via local file server. Refresh + Open in Browser buttons. |
 
-Sub-tab cycling: `Option+Shift+2`.
+	Sub-tab cycling: `Option+Shift+2`.
 
 ---
 
@@ -264,7 +258,7 @@ Sub-tab cycling: `Option+Shift+2`.
 
 ### Visits — Detail Tab
 
-Full visit record with DetailHeader (prev/next), restaurant link, all fields editable. "Return to Restaurant" button when navigated from a restaurant's Visits sub-tab.
+	Full visit record with DetailHeader (prev/next), restaurant link, all fields editable. "Return to Restaurant" button when navigated from a restaurant's Visits sub-tab.
 
 ---
 
@@ -307,41 +301,43 @@ Full visit record with DetailHeader (prev/next), restaurant link, all fields edi
 
 ### Recommend Page
 
-Wizard/tool UI — not a standard List/Detail.
+	Wizard/tool UI — not a standard List/Detail.
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Where should we eat tonight?                        │
-│                                                      │
-│  Occasion:  [date night ▼]                           │
-│  Cuisine:   [any ▼]                                  │
-│  Price:     [any ▼]                                  │
-│  BYOB:      [don't care ▼]                           │
-│  Mood:      [romantic ▼]                             │
-│                                                      │
-│  [✨ Recommend]                                      │
-│                                                      │
-│  ┌──────────────────────────────────────────────┐    │
-│  │ 🥇 Zahav — "Award-winning, you haven't been │    │
-│  │    in 4 months" — $$$$                        │    │
-│  ├──────────────────────────────────────────────┤    │
-│  │ 2. Vernick — "BYOB you loved last time" — $$ │    │
-│  │ 3. Talula's — "New 50 Best, never visited"   │    │
-│  └──────────────────────────────────────────────┘    │
-│                                                      │
-│  Tabs: [Tonight] [Bucket List] [Revisit] [Explore]   │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Wizard["Where should we eat tonight?"]
+        direction TB
+        F1["Occasion: date night ▼"]
+        F2["Cuisine: any ▼"]
+        F3["Price: any ▼"]
+        F4["BYOB: don't care ▼"]
+        F5["Mood: romantic ▼"]
+        BTN["✨ Recommend"]
+    end
+    subgraph Results[" "]
+        R1["🥇 Zahav — Award-winning, haven't been in 4 months — $$$$"]
+        R2["2. Vernick — BYOB you loved last time — $$"]
+        R3["3. Talula's — New 50 Best, never visited"]
+    end
+    subgraph Tabs[" "]
+        direction LR
+        T1["Tonight"]
+        T2["Bucket List"]
+        T3["Revisit"]
+        T4["Explore"]
+    end
+    Wizard --> Results --> Tabs
 ```
 
-Each recommendation is a clickable card that navigates to Restaurant Detail. The #1 result is displayed prominently as THE answer — larger card, hero treatment. Results 2–5 are below in a compact list ("or if not that..."). The ideal UX is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The secondary results exist for when the answer doesn't land.
+	Each recommendation is a clickable card that navigates to Restaurant Detail. The #1 result is displayed prominently as THE answer — larger card, hero treatment. Results 2–5 are below in a compact list ("or if not that..."). The ideal UX is one-tap-one-answer: open the app, tap Tonight, get a restaurant. The secondary results exist for when the answer doesn't land.
 
 ---
 
 ### Tit-for-Tat UI (When Enabled)
 
-Tit-for-tat is **off by default**. When disabled, there is zero UI footprint — no indicator, no badge, no empty state message. It does not exist until both users enable it in Settings (mutual consent).
+	Tit-for-tat is **off by default**. When disabled, there is zero UI footprint — no indicator, no badge, no empty state message. It does not exist until both users enable it in Settings (mutual consent).
 
-When enabled, the UI is subtle:
+	When enabled, the UI is subtle:
 - A small text line below the Recommend page's "Where should we eat tonight?" heading: `"Meriam's pick"` or `"Your pick"` — no icon, no animation, no color change
 - The turn state is informational only — it influences the scoring algorithm but does not prevent either user from using any feature
 - Either user can tap/click the turn indicator to waive their turn
@@ -361,35 +357,35 @@ When enabled, the UI is subtle:
 
 ### Preview System (Desktop Only)
 
-Cached website previews rendered in an iframe via a local file server.
+	Cached website previews rendered in an iframe via a local file server.
 
-**Flow:**
-1. User views Restaurant Detail → clicks Preview sub-tab
-2. Frontend calls `GetPreviewURL(restaurantID)`
-3. Backend checks local cache: `~/.local/share/trueblocks/suppr/cache/previews/{restaurantID}/`
-4. If cache miss or stale: fetch website, parse HTML, rewrite URLs to absolute, download key images, strip scripts, save cleaned HTML
-5. Backend returns: `http://127.0.0.1:{port}/preview/{restaurantID}/index.html?t={mtime}`
-6. Frontend renders in `<iframe>`
+	**Flow:**
+	1. User views Restaurant Detail → clicks Preview sub-tab
+	2. Frontend calls `GetPreviewURL(restaurantID)`
+	3. Backend checks local cache: `~/.local/share/trueblocks/suppr/cache/previews/{restaurantID}/`
+	4. If cache miss or stale: fetch website, parse HTML, rewrite URLs to absolute, download key images, strip scripts, save cleaned HTML
+	5. Backend returns: `http://127.0.0.1:{port}/preview/{restaurantID}/index.html?t={mtime}`
+	6. Frontend renders in `<iframe>`
 
-**Cache structure:**
-```
-cache/previews/{restaurantID}/
-├── index.html          ← cleaned, rewritten HTML
-├── img/                ← downloaded images
-└── meta.json           ← fetch timestamp, original URL, status
-```
+	**Cache structure:**
+	```
+	cache/previews/{restaurantID}/
+	├── index.html          ← cleaned, rewritten HTML
+	├── img/                ← downloaded images
+	└── meta.json           ← fetch timestamp, original URL, status
+	```
 
-**Local file server** starts on a dynamic localhost port during `App.Startup()`. Routes:
+	**Local file server** starts on a dynamic localhost port during `App.Startup()`. Routes:
 - `/preview/{restaurantID}/{path}` — serves cached HTML and images
 - `/photos/{path}` — serves downloaded photos
 
-No X-Frame-Options blocking (we serve our own copy). Works offline after initial fetch. Scripts stripped for security.
+	No X-Frame-Options blocking (we serve our own copy). Works offline after initial fetch. Scripts stripped for security.
 
 ---
 
 ### Command Palette (Cmd+Shift+P) — Desktop Only
 
-Fuzzy-searchable list of actions (not data). Distinct from global search (Cmd+K).
+	Fuzzy-searchable list of actions (not data). Distinct from global search (Cmd+K).
 
 | Command | Shortcut |
 |---------|----------|
@@ -406,24 +402,24 @@ Fuzzy-searchable list of actions (not data). Distinct from global search (Cmd+K)
 | Toggle Dark Mode | — |
 | Toggle Show Deleted | Cmd+Shift+D |
 
-Arrow Up/Down + Enter to execute. Escape to close. Each command shows its keyboard shortcut right-aligned.
+	Arrow Up/Down + Enter to execute. Escape to close. Each command shows its keyboard shortcut right-aligned.
 
 ---
 
 ### Global Search Modal (Cmd+K)
 
-Searches across all entity types:
+	Searches across all entity types:
 - Restaurants (by name, cuisine, neighborhood)
 - Visits (by restaurant name, notes)
 - Intel (by headline, restaurant name)
 
-Results grouped by type with icons. Click → navigate to entity detail.
+	Results grouped by type with icons. Click → navigate to entity detail.
 
 ---
 
 ### Hotkeys (Complete Registry)
 
-These follow the platform pattern established by works. All are registered via `useHotkeys` from `@mantine/hooks` (re-exported via `@trueblocks/ui`). The hook is called in `useKeyboardShortcuts.ts` (global) and in individual page components (context-specific).
+	These follow the platform pattern established by works. All are registered via `useHotkeys` from `@mantine/hooks` (re-exported via `@trueblocks/ui`). The hook is called in `useKeyboardShortcuts.ts` (global) and in individual page components (context-specific).
 
 #### Global Hotkeys (registered in App.tsx / useKeyboardShortcuts.ts)
 
@@ -501,26 +497,26 @@ These follow the platform pattern established by works. All are registered via `
 | 5 | Full route per tab | `SetTabRoute(key, route)` |
 | 6 | Table state (sort/search/filter) | Handled by `createDataTable` wrapper |
 
-All stored locally in `state.json` via `appkit.Store`. Not synced to the server.
+	All stored locally in `state.json` via `appkit.Store`. Not synced to the server.
 
 ---
 
 ### Cross-Navigation Patterns
 
-Navigation between related entities preserves return context:
+	Navigation between related entities preserves return context:
 
 - Restaurant Detail → Visits sub-tab → click visit → Visit Detail (with "Return to Zahav" button)
 - Visits list → click visit → Visit Detail → click restaurant name → Restaurant Detail (with "Return to Visits" button)
 - Dashboard → click bucket list item → Restaurant Detail (with "Return to Dashboard" button)
 - Recommend → click recommendation → Restaurant Detail (with "Return to Recommend" button)
 
-Uses `location.state` with `returnTo` and `returnLabel` fields.
+	Uses `location.state` with `returnTo` and `returnLabel` fields.
 
 ---
 
 ### Status Bar
 
-Bottom-left status messages:
+	Bottom-left status messages:
 - Info (data loaded counts)
 - Progress (photo uploading, data syncing)
 - Success (visit logged, restaurant updated)
@@ -530,44 +526,51 @@ Bottom-left status messages:
 
 ### Component Architecture
 
-```
-src/pages/
-├── DashboardPage.tsx
-├── RestaurantsPage.tsx          ← TabView + NavigationProvider
-├── RestaurantsList.tsx
-├── RestaurantDetail.tsx         ← DetailHeader + sub-tabs
-├── VisitsPage.tsx
-├── VisitsList.tsx
-├── VisitDetail.tsx
-├── AwardsPage.tsx / AwardsList.tsx / AwardDetail.tsx
-├── EpisodesPage.tsx / EpisodesList.tsx / EpisodeDetail.tsx
-├── IntelPage.tsx / IntelList.tsx / IntelDetail.tsx
-├── RecommendPage.tsx            ← Wizard UI
-└── SettingsPage.tsx             ← Tabbed settings
+	```
+	src/pages/
+	├── DashboardPage.tsx
+	├── RestaurantsPage.tsx          ← TabView + NavigationProvider
+	├── RestaurantsList.tsx
+	├── RestaurantDetail.tsx         ← DetailHeader + sub-tabs
+	├── VisitsPage.tsx
+	├── VisitsList.tsx
+	├── VisitDetail.tsx
+	├── AwardsPage.tsx / AwardsList.tsx / AwardDetail.tsx
+	├── EpisodesPage.tsx / EpisodesList.tsx / EpisodeDetail.tsx
+	├── IntelPage.tsx / IntelList.tsx / IntelDetail.tsx
+	├── RecommendPage.tsx            ← Wizard UI
+	└── SettingsPage.tsx             ← Tabbed settings
 
-src/components/
-├── DataTable.tsx                ← createDataTable wrapper
-├── RestaurantSubTabs/           ← Overview, Visits, Awards, etc.
-└── RecommendTabs/               ← Tonight, BucketList, Revisit, Explore
-```
+	src/components/
+	├── DataTable.tsx                ← createDataTable wrapper
+	├── RestaurantSubTabs/           ← Overview, Visits, Awards, etc.
+	└── RecommendTabs/               ← Tonight, BucketList, Revisit, Explore
+	```
 
 ---
 
 ## Mobile PWA
 
-The phone experience is tailored for mobile use cases: quick lookup, log a visit, snap a photo, browse recommendations. It is **not** a miniaturized desktop app.
+	The phone experience is tailored for mobile use cases: quick lookup, log a visit, snap a photo, browse recommendations. It is **not** a miniaturized desktop app.
 
 ### Navigation
 
-Bottom tab bar (standard iOS pattern):
+	Bottom tab bar (standard iOS pattern):
 
-```
-┌─────────────────────────────────────────┐
-│         [page content]                  │
-├─────────────────────────────────────────┤
-│  🏠      🍽      ✨      📷      👤    │
-│ Home   Browse  Tonight  Log    Profile  │
-└─────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Screen[" "]
+        Content["Page Content"]
+    end
+    subgraph TabBar[" "]
+        direction LR
+        T1["🏠 Home"]
+        T2["🍽 Browse"]
+        T3["✨ Tonight"]
+        T4["📷 Log"]
+        T5["👤 Profile"]
+    end
+    Screen --> TabBar
 ```
 
 | Tab | Purpose |
@@ -580,24 +583,25 @@ Bottom tab bar (standard iOS pattern):
 
 ### Browse → Restaurant List (Mobile)
 
-Card list with search bar and filter chips. No DataTable — cards are thumb-friendly.
+	Card list with search bar and filter chips. No DataTable — cards are thumb-friendly.
 
-```
-┌─────────────────────────────────────────┐
-│ 🔍 Search restaurants...                │
-│ [Cuisine ▼] [Neighborhood ▼] [Price ▼]  │
-├─────────────────────────────────────────┤
-│ ┌─────────────────────────────────────┐ │
-│ │ Zahav              ★★★★★ (3 visits)│ │
-│ │ Mediterranean · Rittenhouse · $$$$  │ │
-│ │ 🏆 5 awards                        │ │
-│ └─────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Search[" "]
+        S1["🔍 Search restaurants..."]
+        S2["Cuisine ▼ | Neighborhood ▼ | Price ▼"]
+    end
+    subgraph Card["Restaurant Card"]
+        C1["Zahav ★★★★★ 3 visits"]
+        C2["Mediterranean · Rittenhouse · $$$$"]
+        C3["🏆 5 awards"]
+    end
+    Search --> Card
 ```
 
 ### Browse → Restaurant Detail (Mobile)
 
-Stacked collapsible cards (not sub-tabs):
+	Stacked collapsible cards (not sub-tabs):
 
 - Header: name, cuisine, neighborhood, price, rating
 - Info: address, phone, website, BYOB, reservations
@@ -608,52 +612,56 @@ Stacked collapsible cards (not sub-tabs):
 
 ### Log a Visit (Mobile — Primary Use Case)
 
-Must be fast and frictionless:
+	Must be fast and frictionless:
 
-```
-┌─────────────────────────────────────────┐
-│ Log a Visit                             │
-│                                         │
-│ Restaurant: [search + autocomplete]     │
-│ Date: [today ▼]                         │
-│ Rating: ☆ ☆ ☆ ☆ ☆                      │
-│ Occasion: [casual ▼]                    │
-│ Notes: [                            ]   │
-│ Photo: [📷 Take Photo] [📁 Choose]      │
-│                                         │
-│        [Save Visit]                     │
-└─────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Form["Log a Visit"]
+        F1["Restaurant: search + autocomplete"]
+        F2["Date: today ▼"]
+        F3["Rating: ☆ ☆ ☆ ☆ ☆"]
+        F4["Occasion: casual ▼"]
+        F5["Notes: free text"]
+        F6["Photo: 📷 Take Photo | 📁 Choose"]
+        F7["Save Visit"]
+    end
 ```
 
-Camera via `<input type="file" accept="image/*" capture="environment">` — opens iPhone camera directly.
+	Camera via `<input type="file" accept="image/*" capture="environment">` — opens iPhone camera directly.
 
 ### Tonight (Mobile Recommendations)
 
-Same concept as desktop but simplified:
+	Same concept as desktop but simplified:
 
-```
-┌─────────────────────────────────────────┐
-│ Where should we eat?                     │
-│ [Occasion ▼] [Cuisine ▼] [Price ▼]      │
-│ [✨ Recommend]                          │
-│                                         │
-│ 🥇 Zahav                               │
-│ "Award-winning, haven't been in 4mo"   │
-│ [View] [Reserve] [Directions]           │
-│                                         │
-│ [Bucket List] [Revisit] [Explore]       │
-└─────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Tonight["Where should we eat?"]
+        F["Occasion ▼ | Cuisine ▼ | Price ▼"]
+        BTN["✨ Recommend"]
+    end
+    subgraph Result[" "]
+        R1["🥇 Zahav"]
+        R2["Award-winning, haven't been in 4mo"]
+        R3["View | Reserve | Directions"]
+    end
+    subgraph Tabs[" "]
+        direction LR
+        T1["Bucket List"]
+        T2["Revisit"]
+        T3["Explore"]
+    end
+    Tonight --> Result --> Tabs
 ```
 
-"Directions" opens Apple Maps. "Reserve" opens the restaurant's reservation platform if known.
+	"Directions" opens Apple Maps. "Reserve" opens the restaurant's reservation platform if known.
 
 ### Photos on PWA
 
-The PWA is always online. It:
+	The PWA is always online. It:
 - **Reads** photos from the server (no local cache, no sync)
 - **Uploads** photos to the server (from camera or photo library)
 
-No offline photo viewing. No sync protocol needed for the PWA.
+	No offline photo viewing. No sync protocol needed for the PWA.
 
 ---
 
@@ -670,4 +678,4 @@ No offline photo viewing. No sync protocol needed for the PWA.
 | Preview system | Yes (local file server) | No |
 | Command palette | Yes (Cmd+Shift+P) | No |
 
-**Recommendation**: Separate frontends, shared TypeScript types. The layouts are too different to share components. But API response types and error handling should be shared via a common `types.ts`.
+	**Recommendation**: Separate frontends, shared TypeScript types. The layouts are too different to share components. But API response types and error handling should be shared via a common `types.ts`.
