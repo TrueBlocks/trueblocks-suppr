@@ -107,3 +107,109 @@ The real problem isn't this particular workflow. It's that markdown is the only 
 What AI memory actually needs is a native format — something that preserves all context, all connections, all the subtlety that gets stripped when you flatten thought into `# headings` and `*emphasis*`. The human side needs WYSIWYG — text that looks exactly as it will appear on the physical page, whether that page is paper or screen. These are two completely different requirements served by two completely different formats, and the translation layer between them should be trivial and lossless.
 
 Right now we're forcing both sides through markdown, which serves neither side well. The human can't see final formatting. The AI can't see semantic relationships. We're in an awkward middle ground that will look as primitive as punch cards once someone builds the right native format. Markdown is JSON for prose: technically sufficient, existentially hostile, and inexplicably dominant despite being obviously wrong.
+
+## May 25, 2026 — The App Should Start Its Own Server
+
+The first end-to-end run of the suppr Wails app surfaced a workflow bug worth recording. The architecture the spec describes is clean — Wails desktop app talks HTTP to a separate `suppr-server` binary, same server the PWA hits — but it has a usability cost: nothing happens until the user starts the server in a second terminal. Open the app, get a hung window with no feedback. Worse: the webview cannot surface a useful error because the API call just times out silently.
+
+Two lessons. First: the *book* needs to say the app launches the server itself. The architectural diagram in the specs (`client-server-pattern.md`, `project-structure.md`) shows `Wails app → HTTP → suppr-server → SQLite` with the implication that they are separate processes. That is true on a deployed VPS, but on the user laptop they have to feel like one program. The desktop app should spawn (or embed) the API server during `Startup` and shut it down during `Shutdown`. The PWA continues to point at the deployed server. Same client, two host environments, but the desktop experience is *one app, one click*.
+
+Second: silent failures are unforgivable in a two-person app. Thomas is not going to read a README to find out he needs to `make run` first. Meriam definitely is not. The first thing every page renders has to be either real data or a real error message — not a perpetual loading spinner.
+
+The fix going in now: `app/app.go` starts the API server in a goroutine during `Startup`, on a free port if `:8420` is taken, and writes the chosen URL into the client. The user-visible model is "double-click suppr, see restaurants." The book chapter on the client/server pattern needs an edit to reflect this.
+
+## May 25, 2026 — Wails Only, No Browser Mode
+
+Decision: suppr is a Wails desktop app, full stop. No browser-mode development. The frontend will never be served by a separate vite dev server in a tab, and the API will never be reached at `http://localhost:8420` from a browser. The desktop bundle has the API embedded in-process via Wails AssetServer Handler; that is the only supported runtime.
+
+Why this matters: every "two host environments" feature (CORS handling, absolute API URLs, port-detection heuristics, vite proxy config, a separate `cmd/suppr-server` build target wired into the dev workflow) is dead weight. It complicates the code, it complicates the docs, and worst of all it gives the user two ways to launch the app — one that works and one that silently fails. Two-person software has one front door.
+
+The PWA (Phase 4) is the only legitimate browser surface. That is a separate deployment talking to a separate deployed `suppr-server` on a VPS, with its own URL, its own auth, and its own UX (mobile-first, bottom tabs, photo upload). It is not "the suppr Wails frontend opened in a browser." When the book gets to Phase 4 it needs to be explicit that the PWA is a sibling client, not a development mode of the desktop app.
+
+What gets pulled from the codebase as a result: the vite `proxy` config, the `wails-dev` and `make run` workflow conveniences that assumed browser-mode dev, and any frontend logic that tried to handle "not in Wails" gracefully. `wails dev` remains for hot-reload during development — but that still runs inside the Wails webview, never a browser tab.
+
+## May 26, 2026 — `wails dev` Has Its Own Networking Reality (Spec + Narrative Note)
+
+Lost half a day to a problem that should have been a five-minute footnote. In production the chi router is mounted in-process via `assetserver.Options.Handler` — the webview talks to it directly, no TCP, no ports, no CORS. Clean. Beautiful. The single front door I just wrote a build-log entry celebrating.
+
+Then I ran `wails dev` and there was no data. None. Vite serves the frontend from `:5173` and intercepts every `/api/*` request as an SPA route, falling back to `index.html`. The frontend `fetch("/api/restaurants")` returned HTML. Adding a Vite proxy to Wails internal `:34115` produced a flood of `socket hang up` — that port is the webview loader, not an HTTP server for external clients. Before that, `431 Request Header Fields Too Large` from Node’s default header cap. None of this is anywhere in the Wails docs as a single coherent paragraph.
+
+The fix that finally worked: `main.go` starts chi on a dedicated `127.0.0.1:34116` listener in a goroutine, alongside the in-process `AssetServer.Handler`. Vite proxies `/api` to `:34116`. Production is unchanged — webview still uses the in-process path, the extra port just sits there idle.
+
+**What needs to change in the spec.** The "one handler, one front door" language was correct for the deployed shape but elided a real implementation requirement. The spec must explicitly say: the API handler MUST be reachable two ways simultaneously — (1) as `assetserver.Options.Handler` for the production webview, and (2) on a fixed loopback TCP port (`127.0.0.1:34116`) for the Vite dev proxy. Both bindings use the exact same `http.Handler`. The Vite config must proxy `/api` to that port. This is not a "dev mode" toggle — it is the same code path in both builds, which is the whole point. A reader’s AI implementing from the spec must not be allowed to interpret "in-process handler" as "no TCP listener at all," because then `wails dev` silently breaks and the next person loses half a day.
+
+**What needs to change in the narrative.** The previous build-log entry ("PWA is a separate sibling client, not a dev mode of the desktop app") is still right and stays. But the chapter that introduces the single-handler architecture needs one honest paragraph: even though there is logically one API, there are two transports — webview→handler in production, and loopback TCP→handler in `wails dev`. The narrative should not pretend this is a clean abstraction it isn’t. Tooling has seams. The seam is at `wails dev`. Name it, show why it exists (Vite owns the frontend during dev and cannot reach an in-process Go handler), and move on. Hiding the seam is what got me here today.
+
+It finally works. That sucked.
+
+## May 26, 2026 — Wails URL opening rule
+
+In Wails apps, do not rely on plain browser links (`href`, `target="_blank"`) inside the webview for external URLs. Use the Wails runtime opener (`BrowserOpenURL`) or backend wrapper (`appkit.OpenURL`) so links open reliably in the host OS browser.
+
+## May 26, 2026 — Inventory Note: Spec Coverage vs Implementation Gaps
+
+Quick inventory against current suppr-build implementation and the written spec:
+
+1) Cmd+K global search (including full-text path): **In spec, not implemented yet.**
+- Spec explicitly calls for global search modal + hotkey (`Cmd+K`) and cross-entity search (restaurants/visits/intel) with FTS5 integration.
+- Current implementation does not yet wire global hotkeys, search modal, or FTS endpoint usage.
+
+2) Full list/detail navigation pattern + repeated menu hotkey cycling: **In spec, not implemented yet.**
+- Spec defines list/detail architecture with `NavigationProvider`, `useDetailPageNavigation`, and repeated Cmd+N cycling behavior (list↔detail).
+- Current app uses simple route switching and selected-row detail pane; no scaffold list/detail stack or hotkey cycling yet.
+
+3) Multi-part sorting (3+ levels) in DataTable: **In spec, partially implemented / missed full scope.**
+- Spec says DataTable should support multi-column sort up to 4 levels.
+- Current DataTable persists a single sort key+direction only.
+
+4) Direct navigation to Detail view: **In spec, partially implemented.**
+- Spec expects direct/open-detail navigation patterns with return context and dedicated detail flows.
+- Current app supports direct opening to restaurant detail from dashboard/visits/recommend/awards/photos/lists via route+selected ID, but does not yet implement full platform detail stack behavior from scaffold pattern.
+
+Conclusion: all four items are either explicitly in spec or strongly implied by spec architecture. The gaps are implementation debt, not missing spec language.
+
+## May 26, 2026 — Process Preference: Step Progress Reporting
+
+After each completed implementation step, include a short progress report with explicit counts (for example: "Done with 14 of 23 steps in this phase"), plus what remains next. Keep it concise and consistent.
+
+## May 26, 2026 — Cmd+K Search Scaffold
+
+Added a global search endpoint and wired a command palette in the app shell. Search now returns cross-entity hits (restaurants, episodes, lists, photos, awards) and routes users to the relevant page or directly to a restaurant detail context when available.
+
+## May 26, 2026 — List/Detail Hotkey Cycling Scaffold
+
+Implemented route hotkey scaffold for list/detail cycling behavior. Cmd+2 now navigates to Restaurants and, when already on Restaurants, toggles List/Detail mode; re-clicking the active Restaurants nav item also toggles the mode. Restaurants now supports explicit List and Detail panels with Enter/double-click opening detail from the list.
+
+## May 26, 2026 — Response Format Preference
+
+Before the closing line, include 2-3 short headline features describing what was added in this step. Then end with: "We are done. Would you like to continue" on one line. If the user says yes, proceed immediately to the next step.
+
+## May 26, 2026 — Multi-Column Sort Behavior Aligned to Spec
+
+Aligned DataTable sorting to works-style semantics: normal clicks build sort levels up to three; adding a fourth new sort rotates out sort level 1; Shift+click resets to a single primary sort and clears the others.
+
+## May 26, 2026 — HARD RULE: No Local Duplication of Library Behavior
+
+Never duplicate shared library behavior in local app code when a library implementation already exists. Use or adapt the shared package implementation. Treat local duplication as a blocking architecture error.
+
+## May 26, 2026 — Direct Detail Return Context
+
+When a restaurant is opened from another page (Dashboard, Visits, Recommend, Awards, Photos, Lists, or search), the Restaurants detail view now shows a Return button back to that source page. Manual nav/hotkey route changes clear that return context.
+
+## May 26, 2026 — Command Palette (Cmd+Shift+P)
+
+Added a command palette modal with action search, shortcut labels, arrow-key navigation, and Enter-to-execute. Includes navigation commands (Cmd+1..8 equivalents), Open Search (Cmd+K), and Reload Current View (Cmd+R).
+
+## May 26, 2026 — Read the Library First
+
+We spent a full session building a custom `NavRow`, a hand-rolled `AppShell` navbar, and a local `DataTable` copy — then turned around and migrated all of it to `AppLayout` and `DataTable` from `packages/ui`, which were already there and ready to use. The wasted work was entirely avoidable.
+
+The rule going forward: before writing a single line of component or layout code in any trueblocks app, read `packages/ui/src/components/` first. Map what the app needs against what already exists. Build against the library. Only write local code when the library genuinely doesn't cover it.
+
+---
+
+## May 26, 2026 — Works-Style Keyboard Parity for List/Detail
+
+Implemented works-style list behavior: list tables are keyboard-active immediately (Arrow Up/Down, Home/End, Enter). Enter opens detail for the selected row. Added detail navigation shortcuts in Restaurants: Cmd+Left returns to source/preview context when available, and Cmd+Shift+Left / Cmd+Shift+Up return to current Restaurants list view.
+
+Spec note: Cmd+Shift+Left / Cmd+Shift+Up are explicitly speced. Cmd+Left as a return-to-source/preview action is implemented for works parity but is not currently explicit in suppr/specs/ui.md.
