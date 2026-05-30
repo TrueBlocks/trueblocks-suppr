@@ -213,3 +213,14 @@ The rule going forward: before writing a single line of component or layout code
 Implemented works-style list behavior: list tables are keyboard-active immediately (Arrow Up/Down, Home/End, Enter). Enter opens detail for the selected row. Added detail navigation shortcuts in Restaurants: Cmd+Left returns to source/preview context when available, and Cmd+Shift+Left / Cmd+Shift+Up return to current Restaurants list view.
 
 Spec note: Cmd+Shift+Left / Cmd+Shift+Up are explicitly speced. Cmd+Left as a return-to-source/preview action is implemented for works parity but is not currently explicit in suppr/specs/ui.md.
+
+## May 26, 2026 — Window geometry persistence
+
+Window size and position are now saved and restored across launches via `~/.local/share/suppr/prefs.json` (same file as the rest of the UI prefs).
+
+**Pattern matches `works`:**
+- Frontend: `useWindowGeometry(SaveWindowGeometry, WindowGetPosition, WindowGetSize)` from `@trueblocks/ui` polls every 2 seconds and debounce-writes on change.
+- Go bound method: `App.SaveWindowGeometry(x, y, w, h int)` writes into `prefsData`.
+- Restore on launch: `main.go` calls the package-level `app.WindowGeometryFromPrefs(path)` before `wails.Run` to get the saved size (used for initial `Width`/`Height`), then restores the position in `OnDomReady` via `runtime.WindowSetPosition`. `StartHidden: true` prevents the window from flashing at the default position before it moves.
+
+**Why `WindowGeometryFromPrefs` is not a method on `App`:** Wails binds all exported methods on the bound struct. Multiple-return-value methods generate incorrect TypeScript (`Promise<number>` instead of a tuple). The package-level function is called from `main.go` only and is never bound to the frontend.
