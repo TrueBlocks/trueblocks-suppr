@@ -1,0 +1,227 @@
+[
+  {
+    "name": "A.Kitchen",
+    "cuisine": "American, French",
+    "region": "Rittenhouse Square",
+    "address": "135 South 18th Street, Philadelphia",
+    "phone": "215-825-7030",
+    "website": "akitchenandbar.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Ambra",
+    "cuisine": "Italian, Tasting Menu",
+    "region": "Bella Vista",
+    "address": "705 South Fourth Street, Philadelphia",
+    "phone": "267-858-9232",
+    "website": "ambraphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Angelo's Pizzeria",
+    "cuisine": "Pizza",
+    "region": "Bella Vista",
+    "address": "736 South Ninth Street, Philadelphia",
+    "phone": "215-922-0000",
+    "website": "angelospizzeriasouthphiladelphia.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Càphê Roasters",
+    "cuisine": "Vietnamese",
+    "region": "Kensington",
+    "address": "3400 J Street G1, Philadelphia",
+    "phone": "215-690-1268",
+    "website": "capheroasters.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Doro Bet",
+    "cuisine": "Ethiopian",
+    "region": "University City",
+    "address": "4533 Baltimore Avenue, Philadelphia",
+    "phone": "215-921-6558",
+    "website": "alifamilyrestaurants.com/doro-bet",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "El Chingon",
+    "cuisine": "Mexican",
+    "region": "East Passyunk",
+    "address": "1524 South 10th Street, Philadelphia",
+    "phone": "267-239-2131",
+    "website": "elchingonphilly.com",
+    "reviewer": "Nikita Richardson"
+  },
+  {
+    "name": "Fiorella",
+    "cuisine": "Italian",
+    "region": "Bella Vista",
+    "address": "817 Christian Street, Philadelphia",
+    "phone": "215-305-9222",
+    "website": "fiorellaphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Friday Saturday Sunday",
+    "cuisine": "Modern American",
+    "region": "Rittenhouse Square",
+    "address": "261 South 21st Street, Philadelphia",
+    "phone": "215-546-4232",
+    "website": "fridaysaturdaysunday.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Gabriella's Vietnam",
+    "cuisine": "Vietnamese",
+    "region": "East Passyunk",
+    "address": "1837 East Passyunk Avenue, Philadelphia",
+    "phone": "272-888-3298",
+    "website": "gabriellasvietnam.com",
+    "reviewer": "Priya Krishna"
+  },
+  {
+    "name": "Hardena",
+    "cuisine": "Indonesian",
+    "region": "South Philadelphia",
+    "address": "1754 South Hicks Street No. 2217, Philadelphia",
+    "phone": "215-271-9442",
+    "website": "instagram.com/hardenaphilly",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Her Place Supper Club",
+    "cuisine": "French, Italian, Jewish",
+    "region": "Rittenhouse Square",
+    "address": "1740 Sansom Street, Philadelphia",
+    "phone": null,
+    "website": "herplacephilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Illata",
+    "cuisine": "Modern American",
+    "region": "Graduate Hospital",
+    "address": "2241 Grays Ferry Avenue, Philadelphia",
+    "phone": null,
+    "website": "illataphl.com",
+    "reviewer": "Nikita Richardson"
+  },
+  {
+    "name": "Kalaya",
+    "cuisine": "Thai",
+    "region": "Fishtown",
+    "address": "4 West Palmer Street, Philadelphia",
+    "phone": "215-545-2535",
+    "website": "kalayaphilly.com",
+    "reviewer": "Brett Anderson"
+  },
+  {
+    "name": "Laurel",
+    "cuisine": "French",
+    "region": "East Passyunk",
+    "address": "1617 East Passyunk Avenue, Philadelphia",
+    "phone": "215-271-8299",
+    "website": "restaurantlaurel.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Mawn",
+    "cuisine": "Cambodian",
+    "region": "Bella Vista",
+    "address": "764 South Ninth Street, Philadelphia",
+    "phone": null,
+    "website": "mawnphilly.com",
+    "reviewer": "Nikita Richardson"
+  },
+  {
+    "name": "Middle Child",
+    "cuisine": "Sandwiches",
+    "region": "Washington Square West",
+    "address": "248 South 11th Street, Philadelphia",
+    "phone": "267-930-8344",
+    "website": "middlechildphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Mish Mish",
+    "cuisine": "Mediterranean",
+    "region": "East Passyunk",
+    "address": "1046 Tasker Street, Philadelphia",
+    "phone": "267-761-9750",
+    "website": "mishmishphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "River Twice",
+    "cuisine": "Modern American",
+    "region": "East Passyunk",
+    "address": "1601 East Passyunk Avenue, Philadelphia",
+    "phone": "267-457-3698",
+    "website": "rivertwicerestaurant.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Royal Sushi & Izakaya",
+    "cuisine": "Japanese",
+    "region": "Queen Village",
+    "address": "780 South Second Street, Philadelphia",
+    "phone": "267-909-9002",
+    "website": "royalsushiandizakaya.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "South Philly Barbacoa",
+    "cuisine": "Mexican",
+    "region": "South Philadelphia",
+    "address": "1140 South Ninth Street, Philadelphia",
+    "phone": "215-694-3797",
+    "website": "instagram.com/barbacoachef",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Suraya",
+    "cuisine": "Lebanese",
+    "region": "Fishtown",
+    "address": "1528 Frankford Avenue, Philadelphia",
+    "phone": "215-302-1900",
+    "website": "surayaphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Tabachoy",
+    "cuisine": "Filipino",
+    "region": "Bella Vista",
+    "address": "932 South 10th Street, Philadelphia",
+    "phone": "215-315-8720",
+    "website": "tabachoyphilly.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Vedge",
+    "cuisine": "Vegan",
+    "region": "Washington Square West",
+    "address": "1221 Locust Street, Philadelphia",
+    "phone": "215-320-7500",
+    "website": "vedgerestaurant.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Vernick Fish",
+    "cuisine": "Seafood",
+    "region": "Logan Square",
+    "address": "1 North 19th Street, Philadelphia",
+    "phone": "215-419-5055",
+    "website": "vernickfish.com",
+    "reviewer": "Regan Stephens"
+  },
+  {
+    "name": "Zahav",
+    "cuisine": "Israeli",
+    "region": "Society Hill",
+    "address": "237 St. James Place, Philadelphia",
+    "phone": "215-625-8800",
+    "website": "zahavrestaurant.com",
+    "reviewer": "Regan Stephens"
+  }
+]
