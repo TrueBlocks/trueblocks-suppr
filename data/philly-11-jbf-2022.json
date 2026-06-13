@@ -1,0 +1,13 @@
+[
+  {"name": "Cicala at the Divine Lorraine", "cuisine": "Italian", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Angela Cicala"},
+  {"name": "Elwood", "cuisine": "American", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Adam Diltz"},
+  {"name": "Second Daughter Baking Co.", "cuisine": "Bakery", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Rhonda Saltzman, Mercedes Brooks"},
+  {"name": "South Philly Barbacoa", "cuisine": "Mexican", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Cristina Martínez"},
+  {"name": "Friday Saturday Sunday", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Her Place Supper Club", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Amanda Shulman"},
+  {"name": "Kalaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Chutatip Suntaranon"},
+  {"name": "Royal Sushi & Izakaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Jesse Ito"},
+  {"name": "Laser Wolf", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "a.kitchen+bar", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Andiario", "cuisine": "American", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Anthony Andiario"}
+]

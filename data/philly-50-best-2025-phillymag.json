@@ -1,0 +1,252 @@
+[
+  {
+    "name": "Friday Saturday Sunday",
+    "cuisine": "New American",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "Kalaya",
+    "cuisine": "Thai",
+    "region": "Fishtown"
+  },
+  {
+    "name": "Royal Izakaya",
+    "cuisine": "Japanese",
+    "region": "Queen Village"
+  },
+  {
+    "name": "Her Place Supper Club",
+    "cuisine": "New American",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "Cantina La Martina",
+    "cuisine": "Mexican",
+    "region": "Kensington"
+  },
+  {
+    "name": "Zahav",
+    "cuisine": "Israeli",
+    "region": "Society Hill"
+  },
+  {
+    "name": "Ground Provisions",
+    "cuisine": "Vegan/New American",
+    "region": "West Chester"
+  },
+  {
+    "name": "Tabachoy",
+    "cuisine": "Filipino",
+    "region": "Bella Vista"
+  },
+  {
+    "name": "Ambra",
+    "cuisine": "Italian",
+    "region": "Queen Village"
+  },
+  {
+    "name": "My Loup",
+    "cuisine": "Modern French",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "El Chingon",
+    "cuisine": "Mexican",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "Vernick Fish",
+    "cuisine": "American/Seafood",
+    "region": "Logan Circle"
+  },
+  {
+    "name": "Mawn",
+    "cuisine": "Cambodian",
+    "region": "Bella Vista"
+  },
+  {
+    "name": "Vetri",
+    "cuisine": "Italian",
+    "region": "Midtown Village"
+  },
+  {
+    "name": "Zeppoli",
+    "cuisine": "Italian",
+    "region": "Collingswood"
+  },
+  {
+    "name": "Gabriella\u2019s Vietnam",
+    "cuisine": "Vietnamese",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "Laurel",
+    "cuisine": "Modern French",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "Laser Wolf",
+    "cuisine": "Israeli",
+    "region": "Kensington"
+  },
+  {
+    "name": "Roxanne",
+    "cuisine": "New American",
+    "region": "Bella Vista"
+  },
+  {
+    "name": "Andiario",
+    "cuisine": "New American",
+    "region": "West Chester"
+  },
+  {
+    "name": "Hardena",
+    "cuisine": "Indonesian",
+    "region": "Point Breeze"
+  },
+  {
+    "name": "Heavy Metal Sausage Co.",
+    "cuisine": "Italian",
+    "region": "South Philly"
+  },
+  {
+    "name": "June BYOB",
+    "cuisine": "French",
+    "region": "Collingswood"
+  },
+  {
+    "name": "Autana",
+    "cuisine": "Venezuelan",
+    "region": "Ardmore"
+  },
+  {
+    "name": "River Twice",
+    "cuisine": "New American",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "South Restaurant & Jazz Club",
+    "cuisine": "Southern Fare",
+    "region": "Spring Garden"
+  },
+  {
+    "name": "Middle Child Clubhouse",
+    "cuisine": "New American",
+    "region": "Fishtown"
+  },
+  {
+    "name": "Irwin\u2019s",
+    "cuisine": "Italian",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "Mish Mish",
+    "cuisine": "Mediterranean",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "China Gourmet",
+    "cuisine": "Chinese",
+    "region": "Northeast Philly"
+  },
+  {
+    "name": "Tulip Pasta & Wine Bar",
+    "cuisine": "Italian",
+    "region": "Fishtown"
+  },
+  {
+    "name": "Honeysuckle Provisions",
+    "cuisine": "African Diaspora",
+    "region": "University City"
+  },
+  {
+    "name": "Superfolie",
+    "cuisine": "French",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "Grandma\u2019s Philly",
+    "cuisine": "Thai",
+    "region": "Midtown Village"
+  },
+  {
+    "name": "Casa Mexico",
+    "cuisine": "Mexican",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "Lark",
+    "cuisine": "New American",
+    "region": "Bala Cynwyd"
+  },
+  {
+    "name": "Little Fish",
+    "cuisine": "Seafood",
+    "region": "Queen Village"
+  },
+  {
+    "name": "Stina Pizzeria",
+    "cuisine": "Mediterranean",
+    "region": "West Passyunk"
+  },
+  {
+    "name": "Parc",
+    "cuisine": "French",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "A.Kitchen + Bar",
+    "cuisine": "New American",
+    "region": "Rittenhouse"
+  },
+  {
+    "name": "Illata",
+    "cuisine": "New American",
+    "region": "Grad Hospital"
+  },
+  {
+    "name": "Corinne\u2019s Place",
+    "cuisine": "Soul Food",
+    "region": "Camden"
+  },
+  {
+    "name": "Juana Tamale",
+    "cuisine": "Mexican",
+    "region": "East Passyunk"
+  },
+  {
+    "name": "White Yak",
+    "cuisine": "Tibetan",
+    "region": "Roxborough"
+  },
+  {
+    "name": "Doro Bet",
+    "cuisine": "Ethiopian",
+    "region": "University"
+  },
+  {
+    "name": "EMei",
+    "cuisine": "Sichuan",
+    "region": "Chinatown"
+  },
+  {
+    "name": "Suraya",
+    "cuisine": "Lebanese",
+    "region": "Fishtown"
+  },
+  {
+    "name": "Sagami",
+    "cuisine": "Japanese",
+    "region": "Collingswood"
+  },
+  {
+    "name": "Kim\u2019s BBQ",
+    "cuisine": "Korean",
+    "region": "North Philly"
+  },
+  {
+    "name": "Georgian Bread",
+    "cuisine": "Georgian",
+    "region": "Northeast Philly"
+  }
+]

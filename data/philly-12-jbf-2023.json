@@ -1,0 +1,14 @@
+[
+  {"name": "Denise's Delicacies", "cuisine": "Bakery", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Friday Saturday Sunday", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Chad Williams"},
+  {"name": "Gabriella's Vietnam", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Thanh Nguyen"},
+  {"name": "Heavy Metal Sausage Co.", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Laser Wolf", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Andrew Henshaw"},
+  {"name": "Le Caveau", "cuisine": "French", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Mighty Bread Co.", "cuisine": "Bakery", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Monk's Café", "cuisine": "Belgian", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Kalaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Chutatip Suntaranon"},
+  {"name": "Her Place Supper Club", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Amanda Shulman"},
+  {"name": "Vernick Food & Drink", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Machine Shop", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Emily Riddell"}
+]

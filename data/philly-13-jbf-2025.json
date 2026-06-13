@@ -1,0 +1,15 @@
+[
+  {"name": "Vernick Fish", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Greg Vernick"},
+  {"name": "Kalaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Mawn", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Phila Lorn"},
+  {"name": "Machine Shop", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Provenance", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Abigail Dahan"},
+  {"name": "Little Fish", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Càphê Roasters", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Friday Saturday Sunday", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Kampar Kongsi", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "El Chingon", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Juan Carlos Aparicio"},
+  {"name": "Bolo", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Yun Fuentes"},
+  {"name": "Royal Sushi & Izakaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Jesse Ito"},
+  {"name": "Her Place Supper Club", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Amanda Shulman"}
+]

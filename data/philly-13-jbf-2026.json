@@ -1,0 +1,15 @@
+[
+  {"name": "Vernick Food & Drink", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Greg Vernick"},
+  {"name": "Kalaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Amá", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Frankie Ramirez"},
+  {"name": "Emmett", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": true, "reviewer": ""},
+  {"name": "Fiore", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Justine MacNeil"},
+  {"name": "Friday Saturday Sunday", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": ""},
+  {"name": "Almanac", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": true, "reviewer": ""},
+  {"name": "Tequilas", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Dan Suro-Cipolloni, David Suro-Piñera"},
+  {"name": "Pietramala", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Ian Graye"},
+  {"name": "Royal Sushi & Izakaya", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Jesse Ito"},
+  {"name": "Little Water", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Randy Rucker"},
+  {"name": "Her Place Supper Club", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Amanda Shulman"},
+  {"name": "Honeysuckle", "cuisine": "", "region": "", "price": "", "address": "", "phone": "", "instagram": "", "website": null, "reservation": "", "new": false, "reviewer": "Omar Tate, Cybille St. Aude-Tate"}
+]
