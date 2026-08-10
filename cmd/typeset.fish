@@ -56,7 +56,7 @@ function gen_chapter
         end
     end
 
-    ~/source/md2docx "$template" "$src" "$dst"
+    ~/source/md2docx --force "$template" "$src" "$dst"
 end
 
 # --- Preflight ---
